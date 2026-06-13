@@ -16,11 +16,18 @@ df = load_data()
 df["tid"] = pd.to_datetime(df["tid"], format="%d.%m %H:%M")
 
 latest = df.iloc[-1]
-ranking = latest.drop("tid").sort_values(ascending=False)
 
-ranking_df = ranking.reset_index()
+ranking_df = latest.drop("tid").reset_index()
 ranking_df.columns = ["Deltaker", "Poeng"]
+
+# sikre numerisk
+ranking_df["Poeng"] = pd.to_numeric(ranking_df["Poeng"], errors="coerce")
+
+ranking_df = ranking_df.sort_values("Poeng", ascending=False)
+
 ranking_df["Plass"] = range(1, len(ranking_df) + 1)
+
+ranking_df = ranking_df[["Plass", "Deltaker", "Poeng"]]
 
 st.subheader("🏆 Rangering")
 st.dataframe(ranking_df, use_container_width=True)
