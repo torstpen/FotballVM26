@@ -9,7 +9,7 @@ URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.x
 @st.cache_data(ttl=60)
 def load_data():
     r = requests.get(URL)
-    return pd.read_excel(BytesIO(r.content), sheet_name="Poeng")
+    return pd.read_excel(BytesIO(r.content), sheet_name="Plotting")
 
 df = load_data()
 
