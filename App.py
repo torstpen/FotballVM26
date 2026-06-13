@@ -15,6 +15,12 @@ df = load_data()
 
 df["tid"] = pd.to_datetime(df["tid"], format="%d.%m %H:%M")
 
+if df is None or df.empty:
+    st.error("DataFrame er tom. Sjekk Excel sheet / datakilde.")
+    st.stop()
+
+latest = df.iloc[-1]
+
 latest = df.iloc[-1]
 
 ranking_df = latest.drop("tid").reset_index()
