@@ -13,7 +13,12 @@ def load_data():
 
 df = load_data()
 
-df["tid"] = pd.to_datetime(df["tid"], errors="coerce", dayfirst=True)
+df["tid"] = pd.to_datetime(
+    df["tid"],
+    errors="coerce",
+    unit="D",
+    origin="1899-12-30"
+)
 
 df = df.dropna(subset=["tid"])
 df = df.sort_values("tid")
