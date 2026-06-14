@@ -15,11 +15,12 @@ df = load_data()
 
 df["tid"] = pd.to_datetime(df["tid"], errors="coerce", dayfirst=True)
 
+df = df.dropna(subset=["tid"])
+df = df.sort_values("tid")
+
 if df is None or df.empty:
     st.error("DataFrame er tom. Sjekk Excel sheet / datakilde.")
     st.stop()
-
-latest = df.iloc[-1]
 
 latest = df.iloc[-1]
 
