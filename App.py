@@ -13,7 +13,7 @@ def load_data():
 
 df = load_data()
 
-df["tid"] = pd.to_datetime(df["tid"], format="%d.%m %H:%M")
+df["tid"] = pd.to_datetime(df["tid"], errors="coerce", dayfirst=True)
 
 if df is None or df.empty:
     st.error("DataFrame er tom. Sjekk Excel sheet / datakilde.")
