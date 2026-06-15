@@ -4,7 +4,12 @@ import streamlit as st
 import requests
 from io import BytesIO
 
-URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&st=ja9nbu4m&dl=1"
+# -------------------------------------------------
+# SIDELAYOUT
+# -------------------------------------------------
+st.set_page_config(layout="wide")
+
+URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
 
 
 @st.cache_data(ttl=60)
@@ -19,11 +24,7 @@ df = load_data()
 # KONVERTER TID (Excel serial -> datetime)
 # -------------------------------------------------
 df["tid"] = pd.to_datetime(df["tid"], errors="coerce", unit="D", origin="1899-12-30")
-
-# fjern ugyldige rader
 df = df.dropna(subset=["tid"])
-
-# behold Excel-rekkefølge (viktig for stabil plot)
 df["row_id"] = range(len(df))
 
 # -------------------------------------------------
@@ -87,32 +88,40 @@ ranking_html = f"""
 """
 
 # -------------------------------------------------
-# HOVEDLAYOUT: GRAF STOR, TABELL LITEN
+# LONG FORMAT FOR PLOT
 # -------------------------------------------------
-col1, col2 = st.columns([4, 1])
+df_long = df.melt(
+    id_vars=["tid", "row_id"],
+    var_name="Deltaker",
+    value_name="Poeng"
+).sort_values("row_id")
+
+# -------------------------------------------------
+# PLOT
+# -------------------------------------------------
+fig = px.line(
+    df_long,
+    x="tid",
+    y="Poeng",
+    color="Deltaker",
+    markers=True
+)
+
+fig.update_traces(line_shape="hv")
+fig.update_layout(
+    hovermode="x unified",
+    height=620,
+    margin=dict(l=20, r=20, t=30, b=20),
+    legend_title_text=""
+)
+
+# -------------------------------------------------
+# LAYOUT: GRAF VELDIG STOR, TABELL SMAL
+# -------------------------------------------------
+col1, col2 = st.columns([5, 1], gap="small")
 
 with col1:
     st.subheader("📈 Poenggraf")
-
-    # LONG FORMAT FOR PLOT
-    df_long = df.melt(
-        id_vars=["tid", "row_id"],
-        var_name="Deltaker",
-        value_name="Poeng"
-    )
-    df_long = df_long.sort_values("row_id")
-
-    # STEP CHART
-    fig = px.line(
-        df_long,
-        x="tid",
-        y="Poeng",
-        color="Deltaker",
-        markers=True
-    )
-    fig.update_traces(line_shape="hv")
-    fig.update_layout(hovermode="x unified", height=650)
-
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
