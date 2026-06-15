@@ -87,9 +87,9 @@ ranking_html = f"""
 """
 
 # -------------------------------------------------
-# HOVEDLAYOUT: GRAF VENSTRE, TABELL HØYRE
+# HOVEDLAYOUT: GRAF STOR, TABELL LITEN
 # -------------------------------------------------
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([4, 1])
 
 with col1:
     st.subheader("📈 Poenggraf")
@@ -111,7 +111,7 @@ with col1:
         markers=True
     )
     fig.update_traces(line_shape="hv")
-    fig.update_layout(hovermode="x unified")
+    fig.update_layout(hovermode="x unified", height=650)
 
     st.plotly_chart(fig, use_container_width=True)
 
