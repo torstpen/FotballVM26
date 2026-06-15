@@ -35,23 +35,26 @@ ranking_df = latest.drop(["tid", "row_id"]).reset_index()
 ranking_df.columns = ["Deltaker", "Poeng"]
 
 ranking_df["Poeng"] = pd.to_numeric(ranking_df["Poeng"], errors="coerce")
-ranking_df = ranking_df.sort_values("Poeng", ascending=False)
+ranking_df = ranking_df.sort_values("Poeng", ascending=False).reset_index(drop=True)
 ranking_df["Plass"] = range(1, len(ranking_df) + 1)
 ranking_df = ranking_df[["Plass", "Deltaker", "Poeng"]]
 
 st.subheader("🏆 Rangering")
+
 st.dataframe(
     ranking_df,
-    use_container_width=True,
-    height=600,  # gjør tabellen høyere, så flere rader vises
+    use_container_width=False,   # ikke strekk ut unødvendig
+    hide_index=True,             # skjuler indeksen
+    height=420,                  # nok for 12 rader
     column_config={
         "Plass": st.column_config.NumberColumn(
             "Plass",
             width="small",
+            format="%d",
         ),
         "Deltaker": st.column_config.TextColumn(
             "Deltaker",
-            width="medium",
+            width="large",
         ),
         "Poeng": st.column_config.NumberColumn(
             "Poeng",
