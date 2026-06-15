@@ -40,7 +40,26 @@ ranking_df["Plass"] = range(1, len(ranking_df) + 1)
 ranking_df = ranking_df[["Plass", "Deltaker", "Poeng"]]
 
 st.subheader("🏆 Rangering")
-st.dataframe(ranking_df, use_container_width=True)
+st.dataframe(
+    ranking_df,
+    use_container_width=True,
+    height=600,  # gjør tabellen høyere, så flere rader vises
+    column_config={
+        "Plass": st.column_config.NumberColumn(
+            "Plass",
+            width="small",
+        ),
+        "Deltaker": st.column_config.TextColumn(
+            "Deltaker",
+            width="medium",
+        ),
+        "Poeng": st.column_config.NumberColumn(
+            "Poeng",
+            width="small",
+            format="%.0f",
+        ),
+    },
+)
 
 # -------------------------------------------------
 # LONG FORMAT FOR PLOT
