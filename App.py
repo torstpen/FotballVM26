@@ -39,14 +39,12 @@ ranking_df = ranking_df.sort_values("Poeng", ascending=False).reset_index(drop=T
 ranking_df["Plass"] = range(1, len(ranking_df) + 1)
 ranking_df = ranking_df[["Plass", "Deltaker", "Poeng"]].head(12)
 
-st.subheader("🏆 Rangering")
-
 rows_html = "\n".join(
     f"<tr><td>{row.Plass}</td><td>{row.Deltaker}</td><td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td></tr>"
     for _, row in ranking_df.iterrows()
 )
 
-html = f"""
+ranking_html = f"""
 <style>
 .ranking-wrap {{
     display: inline-block;
@@ -88,34 +86,35 @@ html = f"""
 </div>
 """
 
-st.markdown(html, unsafe_allow_html=True)
-
 # -------------------------------------------------
-# LONG FORMAT FOR PLOT
+# HOVEDLAYOUT: GRAF VENSTRE, TABELL HØYRE
 # -------------------------------------------------
-df_long = df.melt(
-    id_vars=["tid", "row_id"],
-    var_name="Deltaker",
-    value_name="Poeng"
-)
+col1, col2 = st.columns([2, 1])
 
-df_long = df_long.sort_values("row_id")
+with col1:
+    st.subheader("📈 Poenggraf")
 
-# -------------------------------------------------
-# STEP CHART
-# -------------------------------------------------
-fig = px.line(
-    df_long,
-    x="tid",
-    y="Poeng",
-    color="Deltaker",
-    markers=True
-)
+    # LONG FORMAT FOR PLOT
+    df_long = df.melt(
+        id_vars=["tid", "row_id"],
+        var_name="Deltaker",
+        value_name="Poeng"
+    )
+    df_long = df_long.sort_values("row_id")
 
-fig.update_traces(line_shape="hv")  # 🔥 STEP CHART
+    # STEP CHART
+    fig = px.line(
+        df_long,
+        x="tid",
+        y="Poeng",
+        color="Deltaker",
+        markers=True
+    )
+    fig.update_traces(line_shape="hv")
+    fig.update_layout(hovermode="x unified")
 
-fig.update_layout(
-    hovermode="x unified"
-)
+    st.plotly_chart(fig, use_container_width=True)
 
-st.plotly_chart(fig, use_container_width=True)
+with col2:
+    st.subheader("🏆 Rangering")
+    st.markdown(ranking_html, unsafe_allow_html=True)
