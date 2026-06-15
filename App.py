@@ -41,17 +41,14 @@ ranking_df = ranking_df.sort_values(["Poeng", "Deltaker"], ascending=[False, Tru
 # Delte plasser
 ranking_df["Plass"] = ranking_df["Poeng"].rank(method="min", ascending=False).astype("Int64")
 
-# Medaljer ved siden av navn
+# Medalje-kolonne
 medals = {1: "🥇", 2: "🥈", 3: "🥉"}
-ranking_df["Deltaker"] = ranking_df.apply(
-    lambda row: f'{row["Deltaker"]} {medals.get(int(row["Plass"]), "")}'.rstrip(),
-    axis=1
-)
+ranking_df["Medalje"] = ranking_df["Plass"].map(medals).fillna("")
 
-ranking_df = ranking_df[["Plass", "Deltaker", "Poeng"]].head(12)
+ranking_df = ranking_df[["Plass", "Medalje", "Deltaker", "Poeng"]].head(12)
 
 rows_html = "\n".join(
-    f"<tr><td>{row.Plass}</td><td>{row.Deltaker}</td><td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td></tr>"
+    f"<tr><td>{row.Plass}</td><td>{row.Medalje}</td><td>{row.Deltaker}</td><td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td></tr>"
     for _, row in ranking_df.iterrows()
 )
 
@@ -86,6 +83,7 @@ ranking_html = f"""
     <thead>
         <tr>
             <th>Plass</th>
+            <th></th>
             <th>Deltaker</th>
             <th>Poeng</th>
         </tr>
