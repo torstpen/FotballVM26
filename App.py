@@ -37,32 +37,58 @@ ranking_df.columns = ["Deltaker", "Poeng"]
 ranking_df["Poeng"] = pd.to_numeric(ranking_df["Poeng"], errors="coerce")
 ranking_df = ranking_df.sort_values("Poeng", ascending=False).reset_index(drop=True)
 ranking_df["Plass"] = range(1, len(ranking_df) + 1)
-ranking_df = ranking_df[["Plass", "Deltaker", "Poeng"]]
+ranking_df = ranking_df[["Plass", "Deltaker", "Poeng"]].head(12)
 
 st.subheader("🏆 Rangering")
 
-st.dataframe(
-    ranking_df,
-    use_container_width=False,   # ikke strekk ut unødvendig
-    hide_index=True,             # skjuler indeksen
-    height=420,                  # nok for 12 rader
-    column_config={
-        "Plass": st.column_config.NumberColumn(
-            "Plass",
-            width="small",
-            format="%d",
-        ),
-        "Deltaker": st.column_config.TextColumn(
-            "Deltaker",
-            width="large",
-        ),
-        "Poeng": st.column_config.NumberColumn(
-            "Poeng",
-            width="small",
-            format="%.0f",
-        ),
-    },
+rows_html = "\n".join(
+    f"<tr><td>{row.Plass}</td><td>{row.Deltaker}</td><td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td></tr>"
+    for _, row in ranking_df.iterrows()
 )
+
+html = f"""
+<style>
+.ranking-wrap {{
+    display: inline-block;
+}}
+.ranking-table {{
+    width: auto;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}}
+.ranking-table th,
+.ranking-table td {{
+    white-space: nowrap;
+    padding: 0.35rem 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(49, 51, 63, 0.15);
+}}
+.ranking-table th {{
+    font-weight: 600;
+    background-color: rgba(250, 250, 250, 0.95);
+}}
+.ranking-table tr:nth-child(even) td {{
+    background-color: rgba(0, 0, 0, 0.02);
+}}
+</style>
+
+<div class="ranking-wrap">
+<table class="ranking-table">
+    <thead>
+        <tr>
+            <th>Plass</th>
+            <th>Deltaker</th>
+            <th>Poeng</th>
+        </tr>
+    </thead>
+    <tbody>
+        {rows_html}
+    </tbody>
+</table>
+</div>
+"""
+
+st.markdown(html, unsafe_allow_html=True)
 
 # -------------------------------------------------
 # LONG FORMAT FOR PLOT
