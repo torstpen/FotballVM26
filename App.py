@@ -28,7 +28,7 @@ df = df.dropna(subset=["tid"])
 df["row_id"] = range(len(df))
 
 # -------------------------------------------------
-# RANGERING (siste rad) MED DELTE PLASSER
+# RANGERING (siste rad) MED DELTE PLASSER + MEDALJER
 # -------------------------------------------------
 latest = df.iloc[-1]
 
@@ -38,8 +38,15 @@ ranking_df.columns = ["Deltaker", "Poeng"]
 ranking_df["Poeng"] = pd.to_numeric(ranking_df["Poeng"], errors="coerce")
 ranking_df = ranking_df.sort_values(["Poeng", "Deltaker"], ascending=[False, True]).reset_index(drop=True)
 
-# Delte plasser: samme poeng = samme plass
+# Delte plasser
 ranking_df["Plass"] = ranking_df["Poeng"].rank(method="min", ascending=False).astype("Int64")
+
+# Medaljer ved siden av navn
+medals = {1: "🥇", 2: "🥈", 3: "🥉"}
+ranking_df["Deltaker"] = ranking_df.apply(
+    lambda row: f'{row["Deltaker"]} {medals.get(int(row["Plass"]), "")}'.rstrip(),
+    axis=1
+)
 
 ranking_df = ranking_df[["Plass", "Deltaker", "Poeng"]].head(12)
 
