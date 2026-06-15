@@ -28,7 +28,7 @@ df = df.dropna(subset=["tid"])
 df["row_id"] = range(len(df))
 
 # -------------------------------------------------
-# RANGERING (siste rad)
+# RANGERING (siste rad) MED DELTE PLASSER
 # -------------------------------------------------
 latest = df.iloc[-1]
 
@@ -36,8 +36,11 @@ ranking_df = latest.drop(["tid", "row_id"]).reset_index()
 ranking_df.columns = ["Deltaker", "Poeng"]
 
 ranking_df["Poeng"] = pd.to_numeric(ranking_df["Poeng"], errors="coerce")
-ranking_df = ranking_df.sort_values("Poeng", ascending=False).reset_index(drop=True)
-ranking_df["Plass"] = range(1, len(ranking_df) + 1)
+ranking_df = ranking_df.sort_values(["Poeng", "Deltaker"], ascending=[False, True]).reset_index(drop=True)
+
+# Delte plasser: samme poeng = samme plass
+ranking_df["Plass"] = ranking_df["Poeng"].rank(method="min", ascending=False).astype("Int64")
+
 ranking_df = ranking_df[["Plass", "Deltaker", "Poeng"]].head(12)
 
 rows_html = "\n".join(
@@ -97,14 +100,13 @@ df_long = df.melt(
 ).sort_values("row_id")
 
 # -------------------------------------------------
-# PLOT
+# PLOT UTEN MARKØRER
 # -------------------------------------------------
 fig = px.line(
     df_long,
     x="tid",
     y="Poeng",
-    color="Deltaker",
-    markers=True
+    color="Deltaker"
 )
 
 fig.update_traces(line_shape="hv")
@@ -116,7 +118,7 @@ fig.update_layout(
 )
 
 # -------------------------------------------------
-# LAYOUT: GRAF VELDIG STOR, TABELL SMAL
+# LAYOUT
 # -------------------------------------------------
 col1, col2 = st.columns([5, 1], gap="small")
 
