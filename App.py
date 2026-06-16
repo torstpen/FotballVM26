@@ -198,7 +198,7 @@ fig = px.line(
 fig.update_traces(line_shape="hv")
 fig.update_layout(
     hovermode="x unified",
-    height=780,
+    height=560,
     margin=dict(l=10, r=10, t=20, b=10),
     legend_title_text="",
     legend=dict(
@@ -211,7 +211,7 @@ fig.update_layout(
 )
 
 # -------------------------------------------------
-# LAYOUT FOR 16:9
+# LAYOUT
 # -------------------------------------------------
 main_col, side_col = st.columns([5.8, 1.8], gap="large")
 
