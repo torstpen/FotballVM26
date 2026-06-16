@@ -246,7 +246,7 @@ if not label_df.empty:
     fig.add_trace(
         go.Scatter(
             x=[poeng_plot["tid"].max()] * len(label_df),
-            y=label_df["Poeng"] - 0.25,
+            y=label_df["Poeng"] + 0.3,
             mode="text",
             text=label_df["Deltaker"],
             textposition="middle left",
