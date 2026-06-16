@@ -53,7 +53,7 @@ poeng_df["row_id"] = range(len(poeng_df))
 # -------------------------------------------------
 # LEGG TIL EKSTRA PUNKT MED NÅTID (NORSK TID)
 # -------------------------------------------------
-now = pd.Timestamp.now(tz="Europe/Oslo").floor("min")
+now = pd.Timestamp.now(tz="Europe/Oslo").floor("min").tz_convert(None)
 latest_row = poeng_df.iloc[-1].copy()
 latest_row["tid"] = now
 latest_row["row_id"] = poeng_df["row_id"].max() + 1
@@ -207,12 +207,6 @@ poeng_plot = poeng_df.copy()
 poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
 poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 
-# Legg til ekstra rad for nåtid
-now = pd.Timestamp.now(tz="Europe/Oslo").floor("min")
-latest_row = poeng_plot.iloc[-1].copy()
-latest_row["tid"] = now
-poeng_plot = pd.concat([poeng_plot, pd.DataFrame([latest_row])], ignore_index=True)
-
 # Finn deltakerkolonner
 deltaker_cols = [c for c in poeng_plot.columns if c not in ["tid", "row_id"]]
 
@@ -251,7 +245,7 @@ label_df = (
 if not label_df.empty:
     fig.add_trace(
         go.Scatter(
-            x=[poeng_plot["tid"].max()] * len(label_df),
+            x=[now] * len(label_df),
             y=label_df["Poeng"] + 0.3,
             mode="text",
             text=label_df["Deltaker"],
