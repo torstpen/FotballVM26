@@ -1,5 +1,4 @@
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import requests
@@ -210,21 +209,29 @@ df_long = poeng_df.melt(
     value_name="Poeng"
 ).copy()
 
-df_long["Deltaker"] = df_long["Deltaker"].astype("string")
+df_long["Deltaker"] = df_long["Deltaker"].astype(str)
 df_long["Poeng"] = pd.to_numeric(df_long["Poeng"], errors="coerce")
 df_long["row_id"] = pd.to_numeric(df_long["row_id"], errors="coerce")
 df_long["tid"] = pd.to_datetime(df_long["tid"], errors="coerce")
 
-df_long["_Deltaker_sort"] = df_long["Deltaker"].astype(str)
-df_long["_tid_sort"] = df_long["tid"]
-df_long["_row_id_sort"] = df_long["row_id"]
+df_long = df_long.dropna(subset=["tid", "Poeng", "Deltaker"]).copy()
+df_long = df_long.sort_values(["Deltaker", "tid", "row_id"], ascending=[True, True, True])
 
-df_long = df_long.sort_values(
-    ["_Deltaker_sort", "_tid_sort", "_row_id_sort"],
-    ascending=[True, True, True]
-).drop(columns=["_Deltaker_sort", "_tid_sort", "_row_id_sort"])
+fig = go.Figure()
 
-fig.update_traces(line_shape="hv")
+for deltaker in df_long["Deltaker"].unique():
+    sub = df_long[df_long["Deltaker"] == deltaker].copy()
+    sub = sub.sort_values("tid")
+
+    fig.add_trace(
+        go.Scatter(
+            x=sub["tid"],
+            y=sub["Poeng"],
+            mode="lines",
+            name=deltaker,
+            line_shape="hv"
+        )
+    )
 
 # Slå sammen navn for samme poengnivå på siste tidspunkt
 last_points = df_long.sort_values("tid").groupby("Deltaker", as_index=False).tail(1)
