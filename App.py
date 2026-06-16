@@ -52,7 +52,7 @@ poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
 # -------------------------------------------------
-# LEGG TIL EKSTRA PUNKT MED NÅTID
+# LEGG TIL EKSTRA PUNKT MED NÅTID (NORSK TID)
 # -------------------------------------------------
 now = pd.Timestamp.now(tz="Europe/Oslo").floor("min")
 latest_row = poeng_df.iloc[-1].copy()
@@ -208,9 +208,13 @@ df_long = poeng_df.melt(
     id_vars=["tid", "row_id"],
     var_name="Deltaker",
     value_name="Poeng"
-).sort_values(["Deltaker", "tid", "row_id"])
+)
 
+df_long["Deltaker"] = df_long["Deltaker"].astype(str)
 df_long["Poeng"] = pd.to_numeric(df_long["Poeng"], errors="coerce")
+df_long["row_id"] = pd.to_numeric(df_long["row_id"], errors="coerce")
+
+df_long = df_long.sort_values(["Deltaker", "tid", "row_id"], ascending=[True, True, True])
 
 fig = px.line(
     df_long,
@@ -231,11 +235,10 @@ label_df = (
     .reset_index()
 )
 
-# Litt nedover slik at teksten ikke ligger oppå linjene
 fig.add_trace(
     go.Scatter(
         x=[last_points["tid"].max()] * len(label_df),
-        y=label_df["Poeng"] + 0.3,   # juster denne hvis du vil ha mer/mindre ned
+        y=label_df["Poeng"] - 0.25,
         mode="text",
         text=label_df["Deltaker"],
         textposition="middle left",
