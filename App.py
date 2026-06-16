@@ -36,7 +36,7 @@ poeng_df, toppscorere_df = load_data()
 # KONVERTER TID (Excel serial -> datetime)
 # -------------------------------------------------
 poeng_df["tid"] = pd.to_datetime(poeng_df["tid"], errors="coerce", unit="D", origin="1899-12-30")
-poeng_df = poeng_df.dropna(subset=["tid"])
+poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
 # -------------------------------------------------
@@ -109,37 +109,29 @@ ranking_html = f"""
 """
 
 # -------------------------------------------------
-# TOPPSCORERE (TOPP 3)
+# TOPPSCORERE (TOPP 3 UTEN PLASSERING)
 # -------------------------------------------------
 toppscorere_df.columns = toppscorere_df.columns.astype(str).str.strip()
 
-# Tilpass hvis kolonnenavnene avviker
-# Forventer: Plassering, Navn, Land, Mål
-# Rydd kolonnenavn
-toppscorere_df.columns = toppscorere_df.columns.astype(str).str.strip()
-
-# Finn kolonner mer fleksibelt
 col_map = {}
 for col in toppscorere_df.columns:
     low = col.lower()
-    if "plass" in low or "rank" in low:
-        col_map["Plassering"] = col
-    elif "navn" in low or "player" in low:
+    if "navn" in low or "player" in low:
         col_map["Navn"] = col
     elif "land" in low or "country" in low:
         col_map["Land"] = col
     elif "mål" in low or "maal" in low or "goals" in low:
         col_map["Mål"] = col
 
-missing = [k for k in ["Plassering", "Navn", "Land", "Mål"] if k not in col_map]
+missing = [k for k in ["Navn", "Land", "Mål"] if k not in col_map]
 
 if missing:
     st.error(f"Mangler kolonner i arket Toppscorere: {missing}")
     st.write("Fant disse kolonnene:", toppscorere_df.columns.tolist())
     st.stop()
 
-toppscorere_top3 = toppscorere_df[[col_map["Plassering"], col_map["Navn"], col_map["Land"], col_map["Mål"]]].head(3)
-toppscorere_top3.columns = ["Plassering", "Navn", "Land", "Mål"]
+toppscorere_top3 = toppscorere_df[[col_map["Navn"], col_map["Land"], col_map["Mål"]]].head(3)
+toppscorere_top3.columns = ["Navn", "Land", "Mål"]
 
 # -------------------------------------------------
 # LONG FORMAT FOR PLOT
@@ -148,7 +140,7 @@ df_long = poeng_df.melt(
     id_vars=["tid", "row_id"],
     var_name="Deltaker",
     value_name="Poeng"
-).sort_values("row_id")
+).sort_values(["Deltaker", "tid", "row_id"])
 
 df_long["Poeng"] = pd.to_numeric(df_long["Poeng"], errors="coerce")
 
