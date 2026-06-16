@@ -203,39 +203,38 @@ if hendelser_df is not None:
 # -------------------------------------------------
 # PLOT
 # -------------------------------------------------
-df_long = poeng_df.melt(
-    id_vars=["tid", "row_id"],
-    var_name="Deltaker",
-    value_name="Poeng"
-).copy()
+poeng_plot = poeng_df.copy()
+poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
+poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 
-df_long["Deltaker"] = df_long["Deltaker"].astype(str)
-df_long["Poeng"] = pd.to_numeric(df_long["Poeng"], errors="coerce")
-df_long["row_id"] = pd.to_numeric(df_long["row_id"], errors="coerce")
-df_long["tid"] = pd.to_datetime(df_long["tid"], errors="coerce")
-
-df_long = df_long.dropna(subset=["tid", "Poeng", "Deltaker"]).copy()
-df_long = df_long.sort_values(["Deltaker", "tid", "row_id"], ascending=[True, True, True])
+# Finn deltakerkolonner
+deltaker_cols = [c for c in poeng_plot.columns if c not in ["tid", "row_id"]]
 
 fig = go.Figure()
 
-for deltaker in df_long["Deltaker"].unique():
-    sub = df_long[df_long["Deltaker"] == deltaker].copy()
-    sub = sub.sort_values("tid")
+for deltaker in deltaker_cols:
+    y = pd.to_numeric(poeng_plot[deltaker], errors="coerce")
 
     fig.add_trace(
         go.Scatter(
-            x=sub["tid"],
-            y=sub["Poeng"],
+            x=poeng_plot["tid"],
+            y=y,
             mode="lines",
-            name=deltaker,
+            name=str(deltaker),
             line_shape="hv"
         )
     )
 
 # Slå sammen navn for samme poengnivå på siste tidspunkt
-last_points = df_long.sort_values("tid").groupby("Deltaker", as_index=False).tail(1)
-last_points["Poeng"] = pd.to_numeric(last_points["Poeng"], errors="coerce")
+last_row = poeng_plot.iloc[-1]
+last_points = []
+
+for deltaker in deltaker_cols:
+    poeng = pd.to_numeric(pd.Series([last_row[deltaker]]), errors="coerce").iloc[0]
+    if pd.notna(poeng):
+        last_points.append({"Deltaker": str(deltaker), "Poeng": poeng})
+
+last_points = pd.DataFrame(last_points)
 
 label_df = (
     last_points.groupby("Poeng")["Deltaker"]
@@ -243,17 +242,18 @@ label_df = (
     .reset_index()
 )
 
-fig.add_trace(
-    go.Scatter(
-        x=[last_points["tid"].max()] * len(label_df),
-        y=label_df["Poeng"] - 0.25,
-        mode="text",
-        text=label_df["Deltaker"],
-        textposition="middle left",
-        showlegend=False,
-        hoverinfo="skip"
+if not label_df.empty:
+    fig.add_trace(
+        go.Scatter(
+            x=[poeng_plot["tid"].max()] * len(label_df),
+            y=label_df["Poeng"] - 0.25,
+            mode="text",
+            text=label_df["Deltaker"],
+            textposition="middle left",
+            showlegend=False,
+            hoverinfo="skip"
+        )
     )
-)
 
 fig.update_layout(
     hovermode="x unified",
