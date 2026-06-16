@@ -23,13 +23,11 @@ def load_data():
     poeng_df = pd.read_excel(xls, sheet_name="Poeng")
     toppscorere_df = pd.read_excel(xls, sheet_name="Toppscorere")
 
-    # Les hendelser hvis arket finnes
     if "Hendelser" in sheet_names:
         hendelser_df = pd.read_excel(xls, sheet_name="Hendelser")
     else:
         hendelser_df = None
 
-    # Fjern tomme / unnødvendige kolonner
     poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
     poeng_df = poeng_df.dropna(axis=1, how="all")
 
@@ -46,17 +44,16 @@ def load_data():
 poeng_df, toppscorere_df, hendelser_df, sheet_names = load_data()
 
 # -------------------------------------------------
-# KONVERTER TID (Excel serial -> datetime)
+# KONVERTER TID
 # -------------------------------------------------
 poeng_df["tid"] = pd.to_datetime(poeng_df["tid"], errors="coerce", unit="D", origin="1899-12-30")
 poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
 # -------------------------------------------------
-# RANGERING (siste rad) MED DELTE PLASSER + MEDALJER
+# RANGERING
 # -------------------------------------------------
 latest = poeng_df.iloc[-1]
-
 ranking_df = latest.drop(["tid", "row_id"]).reset_index()
 ranking_df.columns = ["Deltaker", "Poeng"]
 
@@ -80,18 +77,19 @@ ranking_html = f"""
 <style>
 .ranking-wrap {{
     display: inline-block;
+    width: 100%;
 }}
 .ranking-table {{
-    width: auto;
+    width: 100%;
     border-collapse: collapse;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
 }}
 .ranking-table th,
 .ranking-table td {{
     white-space: nowrap;
-    padding: 0.35rem 0.6rem;
+    padding: 0.30rem 0.45rem;
     text-align: left;
-    border-bottom: 1px solid rgba(49, 51, 63, 0.15);
+    border-bottom: 1px solid rgba(49, 51, 63, 0.14);
 }}
 .ranking-table th {{
     font-weight: 600;
@@ -120,7 +118,7 @@ ranking_html = f"""
 """
 
 # -------------------------------------------------
-# TOPPSCORERE (TOPP 3 UTEN PLASSERING)
+# TOPPSCORERE
 # Land = Lag, Navn = Spiller
 # -------------------------------------------------
 toppscorere_df.columns = toppscorere_df.columns.astype(str).str.strip()
@@ -146,7 +144,7 @@ toppscorere_top3 = toppscorere_df[[col_map["Navn"], col_map["Land"], col_map["M�
 toppscorere_top3.columns = ["Navn", "Land", "Mål"]
 
 # -------------------------------------------------
-# HENDELSER HORIZONTALT
+# HENDELSER
 # -------------------------------------------------
 hendelser_vis = None
 
@@ -179,7 +177,7 @@ if hendelser_df is not None:
         hendelser_vis = hendelser_vis[["Tid", "Hendelse"]]
 
 # -------------------------------------------------
-# LONG FORMAT FOR PLOT
+# PLOT
 # -------------------------------------------------
 df_long = poeng_df.melt(
     id_vars=["tid", "row_id"],
@@ -189,9 +187,6 @@ df_long = poeng_df.melt(
 
 df_long["Poeng"] = pd.to_numeric(df_long["Poeng"], errors="coerce")
 
-# -------------------------------------------------
-# PLOT UTEN MARKØRER
-# -------------------------------------------------
 fig = px.line(
     df_long,
     x="tid",
@@ -202,15 +197,22 @@ fig = px.line(
 fig.update_traces(line_shape="hv")
 fig.update_layout(
     hovermode="x unified",
-    height=620,
-    margin=dict(l=20, r=20, t=30, b=20),
-    legend_title_text=""
+    height=720,
+    margin=dict(l=10, r=10, t=20, b=10),
+    legend_title_text="",
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="left",
+        x=0
+    )
 )
 
 # -------------------------------------------------
-# LAYOUT
+# LAYOUT FOR ULTRAWIDE
 # -------------------------------------------------
-col1, col2 = st.columns([5, 1], gap="small")
+col1, col2 = st.columns([5.6, 1.4], gap="large")
 
 with col1:
     st.subheader("📈 Poenggraf")
@@ -227,16 +229,17 @@ with col1:
             <div style="
                 display:inline-block;
                 vertical-align:top;
-                min-width:180px;
+                min-width:190px;
                 max-width:260px;
                 margin-right:12px;
-                padding:10px 12px;
+                padding:9px 11px;
                 border:1px solid rgba(49,51,63,0.15);
                 border-radius:10px;
                 background:#fafafa;
+                font-size:0.92rem;
             ">
-                <div style="font-weight:600; margin-bottom:4px;">{row.Tid}</div>
-                <div style="line-height:1.35;">{row.Hendelse}</div>
+                <div style="font-weight:600; margin-bottom:3px;">{row.Tid}</div>
+                <div style="line-height:1.3;">{row.Hendelse}</div>
             </div>
             """
             for _, row in hendelser_vis.iterrows()
@@ -244,7 +247,7 @@ with col1:
 
         st.markdown(
             f"""
-            <div style="display:flex; flex-wrap:wrap; gap:0; overflow-x:auto; padding-bottom:6px;">
+            <div style="display:flex; flex-wrap:nowrap; overflow-x:auto; padding-bottom:6px;">
                 {html_items}
             </div>
             """,
