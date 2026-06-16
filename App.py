@@ -17,9 +17,17 @@ def load_data():
     r = requests.get(URL, timeout=20)
     r.raise_for_status()
 
-    poeng_df = pd.read_excel(BytesIO(r.content), sheet_name="Poeng")
-    toppscorere_df = pd.read_excel(BytesIO(r.content), sheet_name="Toppscorere")
-    hendelser_df = pd.read_excel(BytesIO(r.content), sheet_name="Hendelser")
+    xls = pd.ExcelFile(BytesIO(r.content))
+    sheet_names = xls.sheet_names
+
+    poeng_df = pd.read_excel(xls, sheet_name="Poeng")
+    toppscorere_df = pd.read_excel(xls, sheet_name="Toppscorere")
+
+    # Les hendelser hvis arket finnes
+    if "Hendelser" in sheet_names:
+        hendelser_df = pd.read_excel(xls, sheet_name="Hendelser")
+    else:
+        hendelser_df = None
 
     # Fjern tomme / unnødvendige kolonner
     poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
@@ -28,13 +36,14 @@ def load_data():
     toppscorere_df = toppscorere_df.loc[:, ~toppscorere_df.columns.astype(str).str.contains(r"^Unnamed")]
     toppscorere_df = toppscorere_df.dropna(axis=1, how="all")
 
-    hendelser_df = hendelser_df.loc[:, ~hendelser_df.columns.astype(str).str.contains(r"^Unnamed")]
-    hendelser_df = hendelser_df.dropna(axis=1, how="all")
+    if hendelser_df is not None:
+        hendelser_df = hendelser_df.loc[:, ~hendelser_df.columns.astype(str).str.contains(r"^Unnamed")]
+        hendelser_df = hendelser_df.dropna(axis=1, how="all")
 
-    return poeng_df, toppscorere_df, hendelser_df
+    return poeng_df, toppscorere_df, hendelser_df, sheet_names
 
 
-poeng_df, toppscorere_df, hendelser_df = load_data()
+poeng_df, toppscorere_df, hendelser_df, sheet_names = load_data()
 
 # -------------------------------------------------
 # KONVERTER TID (Excel serial -> datetime)
@@ -137,16 +146,37 @@ toppscorere_top3 = toppscorere_df[[col_map["Navn"], col_map["Land"], col_map["M�
 toppscorere_top3.columns = ["Navn", "Land", "Mål"]
 
 # -------------------------------------------------
-# HENDELSER (LISTE UNDER POGNOGRAFEN)
+# HENDELSER HORIZONTALT
 # -------------------------------------------------
-hendelser_df.columns = hendelser_df.columns.astype(str).str.strip()
+hendelser_vis = None
 
-# Gjør en enkel liste av alle celler i arket, rad for rad
-hendelser_liste = []
-for _, row in hendelser_df.iterrows():
-    values = [str(v) for v in row.tolist() if pd.notna(v) and str(v).strip() != ""]
-    if values:
-        hendelser_liste.append(" - ".join(values))
+if hendelser_df is not None:
+    hendelser_df.columns = hendelser_df.columns.astype(str).str.strip()
+
+    tid_col = None
+    tekst_col = None
+
+    for col in hendelser_df.columns:
+        low = col.lower()
+        if "tid" in low or "time" in low or "dato" in low:
+            tid_col = col
+        elif "hend" in low or "event" in low or "beskjed" in low or "tekst" in low:
+            tekst_col = col
+
+    if tid_col is None and len(hendelser_df.columns) >= 1:
+        tid_col = hendelser_df.columns[0]
+    if tekst_col is None and len(hendelser_df.columns) >= 2:
+        tekst_col = hendelser_df.columns[1]
+
+    if tid_col is not None and tekst_col is not None:
+        hendelser_vis = hendelser_df[[tid_col, tekst_col]].copy()
+        hendelser_vis[tid_col] = pd.to_datetime(hendelser_vis[tid_col], errors="coerce")
+        hendelser_vis = hendelser_vis.dropna(subset=[tid_col, tekst_col])
+
+        hendelser_vis["Tid"] = hendelser_vis[tid_col].dt.strftime("%H:%M")
+        hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
+        hendelser_vis = hendelser_vis.sort_values(tid_col, ascending=False)
+        hendelser_vis = hendelser_vis[["Tid", "Hendelse"]]
 
 # -------------------------------------------------
 # LONG FORMAT FOR PLOT
@@ -187,11 +217,39 @@ with col1:
     st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("📝 Hendelser")
-    if hendelser_liste:
-        for h in hendelser_liste:
-            st.write(f"- {h}")
-    else:
+    if hendelser_vis is None:
+        st.info(f"Fant ikke brukbare kolonner i arket 'Hendelser'. Tilgjengelige ark: {sheet_names}")
+    elif hendelser_vis.empty:
         st.info("Ingen hendelser funnet i arket.")
+    else:
+        html_items = "".join(
+            f"""
+            <div style="
+                display:inline-block;
+                vertical-align:top;
+                min-width:180px;
+                max-width:260px;
+                margin-right:12px;
+                padding:10px 12px;
+                border:1px solid rgba(49,51,63,0.15);
+                border-radius:10px;
+                background:#fafafa;
+            ">
+                <div style="font-weight:600; margin-bottom:4px;">{row.Tid}</div>
+                <div style="line-height:1.35;">{row.Hendelse}</div>
+            </div>
+            """
+            for _, row in hendelser_vis.iterrows()
+        )
+
+        st.markdown(
+            f"""
+            <div style="display:flex; flex-wrap:wrap; gap:0; overflow-x:auto; padding-bottom:6px;">
+                {html_items}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 with col2:
     st.subheader("🏆 Rangering")
