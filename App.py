@@ -3,6 +3,7 @@ import plotly.express as px
 import streamlit as st
 import requests
 from io import BytesIO
+from datetime import datetime
 
 # -------------------------------------------------
 # SIDELAYOUT
@@ -51,9 +52,19 @@ poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
 # -------------------------------------------------
+# LEGG TIL EKSTRA PUNKT MED NÅTID
+# -------------------------------------------------
+now = pd.Timestamp.now().floor("min")
+latest_row = poeng_df.iloc[-1].copy()
+latest_row["tid"] = now
+latest_row["row_id"] = poeng_df["row_id"].max() + 1
+
+poeng_df = pd.concat([poeng_df, pd.DataFrame([latest_row])], ignore_index=True)
+
+# -------------------------------------------------
 # RANGERING
 # -------------------------------------------------
-latest = poeng_df.iloc[-1]
+latest = poeng_df.iloc[-2]  # siste ekte rad, ikke den nye nåtidsraden
 ranking_df = latest.drop(["tid", "row_id"]).reset_index()
 ranking_df.columns = ["Deltaker", "Poeng"]
 
@@ -176,15 +187,10 @@ if hendelser_df is not None:
             cols.append(type_col)
 
         hendelser_vis = hendelser_df[cols].copy()
-
-        # Behold full dato+tid for sortering
         hendelser_vis["DatoTid"] = pd.to_datetime(hendelser_vis[tid_col], errors="coerce")
         hendelser_vis = hendelser_vis.dropna(subset=["DatoTid", tekst_col])
-
-        # Sorter korrekt på dato + tid
         hendelser_vis = hendelser_vis.sort_values("DatoTid", ascending=False)
 
-        # Visning
         hendelser_vis["Tid"] = hendelser_vis["DatoTid"].dt.strftime("%d.%m %H:%M")
         hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
 
