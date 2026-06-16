@@ -231,10 +231,11 @@ label_df = (
     .reset_index()
 )
 
+# Litt nedover slik at teksten ikke ligger oppå linjene
 fig.add_trace(
     go.Scatter(
         x=[last_points["tid"].max()] * len(label_df),
-        y=label_df["Poeng"],
+        y=label_df["Poeng"] - 0.25,   # juster denne hvis du vil ha mer/mindre ned
         mode="text",
         text=label_df["Deltaker"],
         textposition="middle left",
