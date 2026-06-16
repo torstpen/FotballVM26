@@ -207,6 +207,12 @@ poeng_plot = poeng_df.copy()
 poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
 poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 
+# Legg til ekstra rad for nåtid
+now = pd.Timestamp.now(tz="Europe/Oslo").floor("min")
+latest_row = poeng_plot.iloc[-1].copy()
+latest_row["tid"] = now
+poeng_plot = pd.concat([poeng_plot, pd.DataFrame([latest_row])], ignore_index=True)
+
 # Finn deltakerkolonner
 deltaker_cols = [c for c in poeng_plot.columns if c not in ["tid", "row_id"]]
 
