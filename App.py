@@ -77,7 +77,6 @@ ranking_html = f"""
 <style>
 .ranking-wrap {{
     width: 100%;
-    overflow: hidden;
 }}
 .ranking-table {{
     width: 100%;
@@ -199,7 +198,7 @@ fig = px.line(
 fig.update_traces(line_shape="hv")
 fig.update_layout(
     hovermode="x unified",
-    height=920,
+    height=780,
     margin=dict(l=10, r=10, t=20, b=10),
     legend_title_text="",
     legend=dict(
@@ -212,9 +211,9 @@ fig.update_layout(
 )
 
 # -------------------------------------------------
-# FAST LAYOUT: VENSTRE = GRAF, HØYRE = PANEL
+# LAYOUT FOR 16:9
 # -------------------------------------------------
-main_col, side_col = st.columns([7.2, 2.0], gap="medium")
+main_col, side_col = st.columns([5.8, 1.8], gap="large")
 
 with main_col:
     st.subheader("📈 Poenggraf")
@@ -231,8 +230,8 @@ with main_col:
             <div style="
                 display:inline-block;
                 vertical-align:top;
-                min-width:200px;
-                max-width:250px;
+                min-width:180px;
+                max-width:235px;
                 margin-right:10px;
                 padding:8px 10px;
                 border:1px solid rgba(49,51,63,0.15);
