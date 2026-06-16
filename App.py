@@ -19,6 +19,7 @@ def load_data():
 
     poeng_df = pd.read_excel(BytesIO(r.content), sheet_name="Poeng")
     toppscorere_df = pd.read_excel(BytesIO(r.content), sheet_name="Toppscorere")
+    hendelser_df = pd.read_excel(BytesIO(r.content), sheet_name="Hendelser")
 
     # Fjern tomme / unnødvendige kolonner
     poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
@@ -27,10 +28,13 @@ def load_data():
     toppscorere_df = toppscorere_df.loc[:, ~toppscorere_df.columns.astype(str).str.contains(r"^Unnamed")]
     toppscorere_df = toppscorere_df.dropna(axis=1, how="all")
 
-    return poeng_df, toppscorere_df
+    hendelser_df = hendelser_df.loc[:, ~hendelser_df.columns.astype(str).str.contains(r"^Unnamed")]
+    hendelser_df = hendelser_df.dropna(axis=1, how="all")
+
+    return poeng_df, toppscorere_df, hendelser_df
 
 
-poeng_df, toppscorere_df = load_data()
+poeng_df, toppscorere_df, hendelser_df = load_data()
 
 # -------------------------------------------------
 # KONVERTER TID (Excel serial -> datetime)
@@ -51,10 +55,8 @@ ranking_df["Poeng"] = pd.to_numeric(ranking_df["Poeng"], errors="coerce")
 ranking_df = ranking_df.dropna(subset=["Poeng"])
 ranking_df = ranking_df.sort_values(["Poeng", "Deltaker"], ascending=[False, True]).reset_index(drop=True)
 
-# Delte plasser
 ranking_df["Plass"] = ranking_df["Poeng"].rank(method="min", ascending=False).astype("Int64")
 
-# Medalje-kolonne
 medals = {1: "🥇", 2: "🥈", 3: "🥉"}
 ranking_df["Medalje"] = ranking_df["Plass"].map(medals).fillna("")
 
@@ -135,6 +137,18 @@ toppscorere_top3 = toppscorere_df[[col_map["Navn"], col_map["Land"], col_map["M�
 toppscorere_top3.columns = ["Navn", "Land", "Mål"]
 
 # -------------------------------------------------
+# HENDELSER (LISTE UNDER POGNOGRAFEN)
+# -------------------------------------------------
+hendelser_df.columns = hendelser_df.columns.astype(str).str.strip()
+
+# Gjør en enkel liste av alle celler i arket, rad for rad
+hendelser_liste = []
+for _, row in hendelser_df.iterrows():
+    values = [str(v) for v in row.tolist() if pd.notna(v) and str(v).strip() != ""]
+    if values:
+        hendelser_liste.append(" - ".join(values))
+
+# -------------------------------------------------
 # LONG FORMAT FOR PLOT
 # -------------------------------------------------
 df_long = poeng_df.melt(
@@ -171,6 +185,13 @@ col1, col2 = st.columns([5, 1], gap="small")
 with col1:
     st.subheader("📈 Poenggraf")
     st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("📝 Hendelser")
+    if hendelser_liste:
+        for h in hendelser_liste:
+            st.write(f"- {h}")
+    else:
+        st.info("Ingen hendelser funnet i arket.")
 
 with col2:
     st.subheader("🏆 Rangering")
