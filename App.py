@@ -110,15 +110,16 @@ ranking_html = f"""
 
 # -------------------------------------------------
 # TOPPSCORERE (TOPP 3 UTEN PLASSERING)
+# Land = Lag, Navn = Spiller
 # -------------------------------------------------
 toppscorere_df.columns = toppscorere_df.columns.astype(str).str.strip()
 
 col_map = {}
 for col in toppscorere_df.columns:
     low = col.lower()
-    if "navn" in low or "player" in low:
+    if "spiller" in low or "navn" in low or "player" in low:
         col_map["Navn"] = col
-    elif "land" in low or "country" in low:
+    elif "lag" in low or "land" in low or "team" in low or "country" in low:
         col_map["Land"] = col
     elif "mål" in low or "maal" in low or "goals" in low:
         col_map["Mål"] = col
