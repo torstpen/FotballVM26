@@ -115,7 +115,31 @@ toppscorere_df.columns = toppscorere_df.columns.astype(str).str.strip()
 
 # Tilpass hvis kolonnenavnene avviker
 # Forventer: Plassering, Navn, Land, Mål
-toppscorere_top3 = toppscorere_df[["Plassering", "Navn", "Land", "Mål"]].head(3)
+# Rydd kolonnenavn
+toppscorere_df.columns = toppscorere_df.columns.astype(str).str.strip()
+
+# Finn kolonner mer fleksibelt
+col_map = {}
+for col in toppscorere_df.columns:
+    low = col.lower()
+    if "plass" in low or "rank" in low:
+        col_map["Plassering"] = col
+    elif "navn" in low or "player" in low:
+        col_map["Navn"] = col
+    elif "land" in low or "country" in low:
+        col_map["Land"] = col
+    elif "mål" in low or "maal" in low or "goals" in low:
+        col_map["Mål"] = col
+
+missing = [k for k in ["Plassering", "Navn", "Land", "Mål"] if k not in col_map]
+
+if missing:
+    st.error(f"Mangler kolonner i arket Toppscorere: {missing}")
+    st.write("Fant disse kolonnene:", toppscorere_df.columns.tolist())
+    st.stop()
+
+toppscorere_top3 = toppscorere_df[[col_map["Plassering"], col_map["Navn"], col_map["Land"], col_map["Mål"]]].head(3)
+toppscorere_top3.columns = ["Plassering", "Navn", "Land", "Mål"]
 
 # -------------------------------------------------
 # LONG FORMAT FOR PLOT
