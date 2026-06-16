@@ -222,15 +222,22 @@ fig = px.line(
 
 fig.update_traces(line_shape="hv")
 
-# Legg til navn ved siste punkt
+# Slå sammen navn for samme poengnivå på siste tidspunkt
 last_points = df_long.sort_values("tid").groupby("Deltaker", as_index=False).tail(1)
+last_points["Poeng"] = pd.to_numeric(last_points["Poeng"], errors="coerce")
+
+label_df = (
+    last_points.groupby("Poeng")["Deltaker"]
+    .apply(lambda s: ", ".join(s.sort_values().astype(str)))
+    .reset_index()
+)
 
 fig.add_trace(
     go.Scatter(
-        x=last_points["tid"],
-        y=last_points["Poeng"],
+        x=[last_points["tid"].max()] * len(label_df),
+        y=label_df["Poeng"],
         mode="text",
-        text=last_points["Deltaker"],
+        text=label_df["Deltaker"],
         textposition="middle right",
         showlegend=False,
         hoverinfo="skip"
@@ -240,7 +247,7 @@ fig.add_trace(
 fig.update_layout(
     hovermode="x unified",
     height=560,
-    margin=dict(l=10, r=80, t=20, b=10),
+    margin=dict(l=10, r=120, t=20, b=10),
     legend_title_text="",
     legend=dict(
         orientation="h",
