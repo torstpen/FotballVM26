@@ -76,20 +76,23 @@ rows_html = "\n".join(
 ranking_html = f"""
 <style>
 .ranking-wrap {{
-    display: inline-block;
     width: 100%;
+    overflow: hidden;
 }}
 .ranking-table {{
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
+    table-layout: fixed;
 }}
 .ranking-table th,
 .ranking-table td {{
     white-space: nowrap;
-    padding: 0.30rem 0.45rem;
+    padding: 0.28rem 0.35rem;
     text-align: left;
     border-bottom: 1px solid rgba(49, 51, 63, 0.14);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }}
 .ranking-table th {{
     font-weight: 600;
@@ -104,10 +107,10 @@ ranking_html = f"""
 <table class="ranking-table">
     <thead>
         <tr>
-            <th>Plass</th>
-            <th></th>
-            <th>Deltaker</th>
-            <th>Poeng</th>
+            <th style="width:14%;">Plass</th>
+            <th style="width:12%;"></th>
+            <th style="width:52%;">Deltaker</th>
+            <th style="width:22%;">Poeng</th>
         </tr>
     </thead>
     <tbody>
@@ -196,7 +199,7 @@ fig = px.line(
 fig.update_traces(line_shape="hv")
 fig.update_layout(
     hovermode="x unified",
-    height=860,
+    height=920,
     margin=dict(l=10, r=10, t=20, b=10),
     legend_title_text="",
     legend=dict(
@@ -209,11 +212,11 @@ fig.update_layout(
 )
 
 # -------------------------------------------------
-# LAYOUT
+# FAST LAYOUT: VENSTRE = GRAF, HØYRE = PANEL
 # -------------------------------------------------
-col1, col2 = st.columns([6.6, 1.2], gap="large")
+main_col, side_col = st.columns([7.2, 2.0], gap="medium")
 
-with col1:
+with main_col:
     st.subheader("📈 Poenggraf")
     st.plotly_chart(fig, use_container_width=True)
 
@@ -228,14 +231,14 @@ with col1:
             <div style="
                 display:inline-block;
                 vertical-align:top;
-                min-width:190px;
-                max-width:260px;
-                margin-right:12px;
-                padding:9px 11px;
+                min-width:200px;
+                max-width:250px;
+                margin-right:10px;
+                padding:8px 10px;
                 border:1px solid rgba(49,51,63,0.15);
                 border-radius:10px;
                 background:#fafafa;
-                font-size:0.92rem;
+                font-size:0.90rem;
             ">
                 <div style="font-weight:600; margin-bottom:3px;">{row.Tid}</div>
                 <div style="line-height:1.3;">{row.Hendelse}</div>
@@ -253,7 +256,7 @@ with col1:
             unsafe_allow_html=True
         )
 
-with col2:
+with side_col:
     st.subheader("🏆 Rangering")
     st.markdown(ranking_html, unsafe_allow_html=True)
 
