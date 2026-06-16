@@ -16,30 +16,39 @@ URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.x
 def load_data():
     r = requests.get(URL, timeout=20)
     r.raise_for_status()
-    df = pd.read_excel(BytesIO(r.content), sheet_name="Poeng")
-    df = df.loc[:, ~df.columns.astype(str).str.contains(r"^Unnamed")]
-    df = df.dropna(axis=1, how="all")
-    return df
+
+    poeng_df = pd.read_excel(BytesIO(r.content), sheet_name="Poeng")
+    toppscorere_df = pd.read_excel(BytesIO(r.content), sheet_name="Toppscorere")
+
+    # Fjern tomme / unnødvendige kolonner
+    poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
+    poeng_df = poeng_df.dropna(axis=1, how="all")
+
+    toppscorere_df = toppscorere_df.loc[:, ~toppscorere_df.columns.astype(str).str.contains(r"^Unnamed")]
+    toppscorere_df = toppscorere_df.dropna(axis=1, how="all")
+
+    return poeng_df, toppscorere_df
 
 
-df = load_data()
+poeng_df, toppscorere_df = load_data()
 
 # -------------------------------------------------
 # KONVERTER TID (Excel serial -> datetime)
 # -------------------------------------------------
-df["tid"] = pd.to_datetime(df["tid"], errors="coerce", unit="D", origin="1899-12-30")
-df = df.dropna(subset=["tid"])
-df["row_id"] = range(len(df))
+poeng_df["tid"] = pd.to_datetime(poeng_df["tid"], errors="coerce", unit="D", origin="1899-12-30")
+poeng_df = poeng_df.dropna(subset=["tid"])
+poeng_df["row_id"] = range(len(poeng_df))
 
 # -------------------------------------------------
 # RANGERING (siste rad) MED DELTE PLASSER + MEDALJER
 # -------------------------------------------------
-latest = df.iloc[-1]
+latest = poeng_df.iloc[-1]
 
 ranking_df = latest.drop(["tid", "row_id"]).reset_index()
 ranking_df.columns = ["Deltaker", "Poeng"]
 
 ranking_df["Poeng"] = pd.to_numeric(ranking_df["Poeng"], errors="coerce")
+ranking_df = ranking_df.dropna(subset=["Poeng"])
 ranking_df = ranking_df.sort_values(["Poeng", "Deltaker"], ascending=[False, True]).reset_index(drop=True)
 
 # Delte plasser
@@ -100,13 +109,24 @@ ranking_html = f"""
 """
 
 # -------------------------------------------------
+# TOPPSCORERE (TOPP 3)
+# -------------------------------------------------
+toppscorere_df.columns = toppscorere_df.columns.astype(str).str.strip()
+
+# Tilpass hvis kolonnenavnene avviker
+# Forventer: Plassering, Navn, Land, Mål
+toppscorere_top3 = toppscorere_df[["Plassering", "Navn", "Land", "Mål"]].head(3)
+
+# -------------------------------------------------
 # LONG FORMAT FOR PLOT
 # -------------------------------------------------
-df_long = df.melt(
+df_long = poeng_df.melt(
     id_vars=["tid", "row_id"],
     var_name="Deltaker",
     value_name="Poeng"
 ).sort_values("row_id")
+
+df_long["Poeng"] = pd.to_numeric(df_long["Poeng"], errors="coerce")
 
 # -------------------------------------------------
 # PLOT UTEN MARKØRER
@@ -138,3 +158,10 @@ with col1:
 with col2:
     st.subheader("🏆 Rangering")
     st.markdown(ranking_html, unsafe_allow_html=True)
+
+    st.subheader("⚽ Toppscorere")
+    st.dataframe(
+        toppscorere_top3,
+        use_container_width=True,
+        hide_index=True
+    )
