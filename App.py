@@ -176,10 +176,16 @@ if hendelser_df is not None:
             cols.append(type_col)
 
         hendelser_vis = hendelser_df[cols].copy()
-        hendelser_vis[tid_col] = pd.to_datetime(hendelser_vis[tid_col], errors="coerce")
-        hendelser_vis = hendelser_vis.dropna(subset=[tid_col, tekst_col])
 
-        hendelser_vis["Tid"] = hendelser_vis[tid_col].dt.strftime("%H:%M")
+        # Behold full dato+tid for sortering
+        hendelser_vis["DatoTid"] = pd.to_datetime(hendelser_vis[tid_col], errors="coerce")
+        hendelser_vis = hendelser_vis.dropna(subset=["DatoTid", tekst_col])
+
+        # Sorter korrekt på dato + tid
+        hendelser_vis = hendelser_vis.sort_values("DatoTid", ascending=False)
+
+        # Visning
+        hendelser_vis["Tid"] = hendelser_vis["DatoTid"].dt.strftime("%d.%m %H:%M")
         hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
 
         if type_col is not None:
@@ -187,7 +193,6 @@ if hendelser_df is not None:
         else:
             hendelser_vis["Type"] = ""
 
-        hendelser_vis = hendelser_vis.sort_values(tid_col, ascending=False)
         hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse"]]
 
 # -------------------------------------------------
