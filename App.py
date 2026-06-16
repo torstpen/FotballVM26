@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 import requests
 from io import BytesIO
@@ -64,7 +65,7 @@ poeng_df = pd.concat([poeng_df, pd.DataFrame([latest_row])], ignore_index=True)
 # -------------------------------------------------
 # RANGERING
 # -------------------------------------------------
-latest = poeng_df.iloc[-2]  # siste ekte rad, ikke den nye nåtidsraden
+latest = poeng_df.iloc[-2]
 ranking_df = latest.drop(["tid", "row_id"]).reset_index()
 ranking_df.columns = ["Deltaker", "Poeng"]
 
@@ -220,10 +221,26 @@ fig = px.line(
 )
 
 fig.update_traces(line_shape="hv")
+
+# Legg til navn ved siste punkt
+last_points = df_long.sort_values("tid").groupby("Deltaker", as_index=False).tail(1)
+
+fig.add_trace(
+    go.Scatter(
+        x=last_points["tid"],
+        y=last_points["Poeng"],
+        mode="text",
+        text=last_points["Deltaker"],
+        textposition="middle right",
+        showlegend=False,
+        hoverinfo="skip"
+    )
+)
+
 fig.update_layout(
     hovermode="x unified",
     height=560,
-    margin=dict(l=10, r=10, t=20, b=10),
+    margin=dict(l=10, r=80, t=20, b=10),
     legend_title_text="",
     legend=dict(
         orientation="h",
