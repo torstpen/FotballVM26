@@ -208,20 +208,21 @@ df_long = poeng_df.melt(
     id_vars=["tid", "row_id"],
     var_name="Deltaker",
     value_name="Poeng"
-)
+).copy()
 
-df_long["Deltaker"] = df_long["Deltaker"].astype(str)
+df_long["Deltaker"] = df_long["Deltaker"].astype("string")
 df_long["Poeng"] = pd.to_numeric(df_long["Poeng"], errors="coerce")
 df_long["row_id"] = pd.to_numeric(df_long["row_id"], errors="coerce")
+df_long["tid"] = pd.to_datetime(df_long["tid"], errors="coerce")
 
-df_long = df_long.sort_values(["Deltaker", "tid", "row_id"], ascending=[True, True, True])
+df_long["_Deltaker_sort"] = df_long["Deltaker"].astype(str)
+df_long["_tid_sort"] = df_long["tid"]
+df_long["_row_id_sort"] = df_long["row_id"]
 
-fig = px.line(
-    df_long,
-    x="tid",
-    y="Poeng",
-    color="Deltaker"
-)
+df_long = df_long.sort_values(
+    ["_Deltaker_sort", "_tid_sort", "_row_id_sort"],
+    ascending=[True, True, True]
+).drop(columns=["_Deltaker_sort", "_tid_sort", "_row_id_sort"])
 
 fig.update_traces(line_shape="hv")
 
