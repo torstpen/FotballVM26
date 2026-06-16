@@ -54,7 +54,7 @@ poeng_df["row_id"] = range(len(poeng_df))
 # -------------------------------------------------
 # LEGG TIL EKSTRA PUNKT MED NÅTID
 # -------------------------------------------------
-now = pd.Timestamp.now().floor("min")
+now = pd.Timestamp.now(tz="Europe/Oslo").floor("min")
 latest_row = poeng_df.iloc[-1].copy()
 latest_row["tid"] = now
 latest_row["row_id"] = poeng_df["row_id"].max() + 1
