@@ -154,6 +154,7 @@ if hendelser_df is not None:
 
     tid_col = None
     tekst_col = None
+    type_col = None
 
     for col in hendelser_df.columns:
         low = col.lower()
@@ -161,6 +162,8 @@ if hendelser_df is not None:
             tid_col = col
         elif "hend" in low or "event" in low or "beskjed" in low or "tekst" in low:
             tekst_col = col
+        elif "type" in low:
+            type_col = col
 
     if tid_col is None and len(hendelser_df.columns) >= 1:
         tid_col = hendelser_df.columns[0]
@@ -168,14 +171,24 @@ if hendelser_df is not None:
         tekst_col = hendelser_df.columns[1]
 
     if tid_col is not None and tekst_col is not None:
-        hendelser_vis = hendelser_df[[tid_col, tekst_col]].copy()
+        cols = [tid_col, tekst_col]
+        if type_col is not None:
+            cols.append(type_col)
+
+        hendelser_vis = hendelser_df[cols].copy()
         hendelser_vis[tid_col] = pd.to_datetime(hendelser_vis[tid_col], errors="coerce")
         hendelser_vis = hendelser_vis.dropna(subset=[tid_col, tekst_col])
 
         hendelser_vis["Tid"] = hendelser_vis[tid_col].dt.strftime("%H:%M")
         hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
+
+        if type_col is not None:
+            hendelser_vis["Type"] = hendelser_vis[type_col].astype(str)
+        else:
+            hendelser_vis["Type"] = ""
+
         hendelser_vis = hendelser_vis.sort_values(tid_col, ascending=False)
-        hendelser_vis = hendelser_vis[["Tid", "Hendelse"]]
+        hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse"]]
 
 # -------------------------------------------------
 # PLOT
@@ -231,7 +244,7 @@ with main_col:
                 display:inline-block;
                 vertical-align:top;
                 min-width:180px;
-                max-width:235px;
+                max-width:250px;
                 margin-right:10px;
                 padding:8px 10px;
                 border:1px solid rgba(49,51,63,0.15);
@@ -240,6 +253,7 @@ with main_col:
                 font-size:0.90rem;
             ">
                 <div style="font-weight:600; margin-bottom:3px;">{row.Tid}</div>
+                <div style="font-size:0.82rem; color:#666; margin-bottom:3px;">{row.Type}</div>
                 <div style="line-height:1.3;">{row.Hendelse}</div>
             </div>
             """
