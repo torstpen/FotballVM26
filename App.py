@@ -119,7 +119,6 @@ ranking_html = f"""
 
 # -------------------------------------------------
 # TOPPSCORERE
-# Land = Lag, Navn = Spiller
 # -------------------------------------------------
 toppscorere_df.columns = toppscorere_df.columns.astype(str).str.strip()
 
@@ -197,7 +196,7 @@ fig = px.line(
 fig.update_traces(line_shape="hv")
 fig.update_layout(
     hovermode="x unified",
-    height=720,
+    height=860,
     margin=dict(l=10, r=10, t=20, b=10),
     legend_title_text="",
     legend=dict(
@@ -210,9 +209,9 @@ fig.update_layout(
 )
 
 # -------------------------------------------------
-# LAYOUT FOR ULTRAWIDE
+# LAYOUT
 # -------------------------------------------------
-col1, col2 = st.columns([5.6, 1.4], gap="large")
+col1, col2 = st.columns([6.6, 1.2], gap="large")
 
 with col1:
     st.subheader("📈 Poenggraf")
