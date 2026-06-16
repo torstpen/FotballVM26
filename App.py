@@ -14,8 +14,12 @@ URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.x
 
 @st.cache_data(ttl=60)
 def load_data():
-    r = requests.get(URL)
-    return pd.read_excel(BytesIO(r.content), sheet_name="Poeng")
+    r = requests.get(URL, timeout=20)
+    r.raise_for_status()
+    df = pd.read_excel(BytesIO(r.content), sheet_name="Poeng")
+    df = df.loc[:, ~df.columns.astype(str).str.contains(r"^Unnamed")]
+    df = df.dropna(axis=1, how="all")
+    return df
 
 
 df = load_data()
