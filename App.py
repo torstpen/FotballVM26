@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 import streamlit as st
 import requests
 from io import BytesIO
-from datetime import datetime
 
 # -------------------------------------------------
 # SIDELAYOUT
@@ -238,7 +237,7 @@ fig.add_trace(
         y=label_df["Poeng"],
         mode="text",
         text=label_df["Deltaker"],
-        textposition="middle right",
+        textposition="middle left",
         showlegend=False,
         hoverinfo="skip"
     )
@@ -247,7 +246,7 @@ fig.add_trace(
 fig.update_layout(
     hovermode="x unified",
     height=560,
-    margin=dict(l=10, r=120, t=20, b=10),
+    margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
     legend=dict(
         orientation="h",
