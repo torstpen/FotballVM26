@@ -210,7 +210,7 @@ if hendelser_df is not None:
         else:
             hendelser_vis["Type"] = ""
 
-        hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse"]]
+        hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse", "DatoTid"]]
 
         hendelser_lookup_df = hendelser_df[[tid_col, tekst_col]].copy()
         hendelser_lookup_df.columns = ["DatoTid", "Hendelse"]
@@ -230,6 +230,33 @@ def finn_nærmeste_hendelse(ts, events_df, max_diff="45s"):
     if diffs.loc[idx] <= pd.Timedelta(max_diff):
         return str(events_df.loc[idx, "Hendelse"])
     return ""
+
+# -------------------------------------------------
+# FUNKSJON FOR POENGENDRING
+# -------------------------------------------------
+def poengendring_ved_hendelse(ts, poeng_df, deltaker_cols):
+    if pd.isna(ts):
+        return ""
+
+    before = poeng_df[poeng_df["tid"] <= ts].tail(1)
+    after = poeng_df[poeng_df["tid"] >= ts].head(1)
+
+    if before.empty or after.empty:
+        return ""
+
+    changes = []
+
+    for deltaker in deltaker_cols:
+        b = pd.to_numeric(before.iloc[0][deltaker], errors="coerce")
+        a = pd.to_numeric(after.iloc[0][deltaker], errors="coerce")
+
+        if pd.notna(b) and pd.notna(a):
+            diff = a - b
+            if diff != 0:
+                sign = "+" if diff > 0 else ""
+                changes.append(f"{deltaker} {sign}{int(diff)}")
+
+    return ", ".join(changes)
 
 # -------------------------------------------------
 # PLOT
@@ -256,10 +283,25 @@ for deltaker in deltaker_cols:
         )
     )
 
-event_texts = [
-    finn_nærmeste_hendelse(ts, hendelser_lookup_df, max_diff="45s")
-    for ts in poeng_plot["tid"]
-]
+event_texts = []
+for ts in poeng_plot["tid"]:
+    base_text = finn_nærmeste_hendelse(ts, hendelser_lookup_df, max_diff="45s")
+    match_row = None
+    changes_text = ""
+
+    if hendelser_vis is not None and not hendelser_vis.empty:
+        diffs = (hendelser_vis["DatoTid"] - ts).abs()
+        idx = diffs.idxmin()
+        if diffs.loc[idx] <= pd.Timedelta("45s"):
+            match_row = hendelser_vis.loc[idx]
+            changes_text = poengendring_ved_hendelse(match_row["DatoTid"], poeng_plot, deltaker_cols)
+
+    if base_text and changes_text:
+        event_texts.append(f"{base_text}<br><b>Endring:</b> {changes_text}")
+    elif base_text:
+        event_texts.append(base_text)
+    else:
+        event_texts.append("")
 
 hover_y = pd.to_numeric(poeng_plot[deltaker_cols[0]], errors="coerce")
 
@@ -347,8 +389,17 @@ with main_col:
     elif hendelser_vis.empty:
         st.info("Ingen hendelser funnet i arket.")
     else:
-        html_items = "".join(
-            f"""
+        html_items = ""
+        for _, row in hendelser_vis.iterrows():
+            changes = poengendring_ved_hendelse(row["DatoTid"], poeng_plot, deltaker_cols)
+
+            change_html = f"""
+                <div style="font-size:0.82rem; color:#2b7a2b; margin-bottom:3px;">
+                    {changes}
+                </div>
+            """ if changes else ""
+
+            html_items += f"""
             <div style="
                 display:inline-block;
                 vertical-align:top;
@@ -364,10 +415,9 @@ with main_col:
                 <div style="font-weight:600; margin-bottom:3px;">{row.Tid}</div>
                 <div style="font-size:0.82rem; color:#666; margin-bottom:3px;">{row.Type}</div>
                 <div style="line-height:1.3;">{row.Hendelse}</div>
+                {change_html}
             </div>
             """
-            for _, row in hendelser_vis.iterrows()
-        )
 
         st.markdown(
             f"""
