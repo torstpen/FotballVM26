@@ -269,18 +269,21 @@ event_texts = [
     for ts in poeng_plot["tid"]
 ]
 
-# Usynlig trace som viser hovertekst
+# Legg hover på en usynlig men faktisk plottet trace
+hover_y = poeng_plot[deltaker_cols[0]].copy()
+hover_y = pd.to_numeric(hover_y, errors="coerce")
+
 fig.add_trace(
     go.Scatter(
         x=poeng_plot["tid"],
-        y=[None] * len(poeng_plot),
+        y=hover_y,
         mode="markers",
-        marker=dict(size=12, opacity=0),
+        marker=dict(size=18, opacity=0.001),  # nesten usynlig, men hoverbar
         showlegend=False,
-        hovertext=event_texts,
+        customdata=event_texts,
         hovertemplate=(
             "<b>%{x|%d.%m %H:%M:%S}</b><br>"
-            "%{hovertext}<extra></extra>"
+            "%{customdata}<extra></extra>"
         )
     )
 )
@@ -320,7 +323,7 @@ fig.update_xaxes(
 )
 
 fig.update_layout(
-    hovermode="closest",
+    hovermode="x",
     height=560,
     margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
