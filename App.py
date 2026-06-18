@@ -190,14 +190,9 @@ if hendelser_df is not None:
         hendelser_vis["DatoTid"] = pd.to_datetime(hendelser_vis[tid_col], errors="coerce")
         hendelser_vis = hendelser_vis.dropna(subset=["DatoTid", tekst_col])
 
-        # Sorter nyeste først
-        hendelser_vis = hendelser_vis.sort_values("DatoTid", ascending=False)
-
-        # Hendelser siste 24 timer
         cutoff = pd.Timestamp.now() - pd.Timedelta(hours=24)
         siste_24t = hendelser_vis[hendelser_vis["DatoTid"] >= cutoff]
 
-        # Hvis færre enn 20, fyll opp med eldre hendelser
         if len(siste_24t) < 20:
             mangler = 20 - len(siste_24t)
             eldre = hendelser_vis[hendelser_vis["DatoTid"] < cutoff].head(mangler)
@@ -247,7 +242,6 @@ deltaker_cols = [c for c in poeng_plot.columns if c not in ["tid", "row_id"]]
 
 fig = go.Figure()
 
-# Synlige linjer uten hover
 for deltaker in deltaker_cols:
     y = pd.to_numeric(poeng_plot[deltaker], errors="coerce")
 
@@ -262,13 +256,11 @@ for deltaker in deltaker_cols:
         )
     )
 
-# Hover-tekst basert på nærmeste hendelse
 event_texts = [
     finn_nærmeste_hendelse(ts, hendelser_lookup_df, max_diff="45s")
     for ts in poeng_plot["tid"]
 ]
 
-# Hover-trace med faktisk y-verdi, men nesten usynlig
 hover_y = pd.to_numeric(poeng_plot[deltaker_cols[0]], errors="coerce")
 
 fig.add_trace(
@@ -286,7 +278,6 @@ fig.add_trace(
     )
 )
 
-# Slå sammen navn for samme poengnivå på siste tidspunkt
 last_row = poeng_plot.iloc[-1]
 last_points = []
 
@@ -320,13 +311,15 @@ fig.update_xaxes(
     range=[now - pd.Timedelta(hours=24), now],
     showspikes=True,
     spikemode="across",
-    spikesnap="cursor",
+    spikesnap="data",
     spikecolor="rgba(80,80,80,0.7)",
     spikethickness=1.2
 )
 
 fig.update_layout(
     hovermode="x",
+    hoverdistance=20,
+    spikedistance=-1,
     height=560,
     margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
