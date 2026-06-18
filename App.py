@@ -318,7 +318,7 @@ fig.update_xaxes(
 )
 
 fig.update_layout(
-    hovermode=False,
+    hovermode="x",
     height=560,
     margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
