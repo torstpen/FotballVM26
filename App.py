@@ -4,16 +4,15 @@ import streamlit as st
 import requests
 from io import BytesIO
 import streamlit.components.v1 as components
+from viewport_component import viewport_height_component
 
-viewport_height_component = components.declare_component(
-    "viewport_height_component",
-    path="viewport_component/frontend"
-)
-viewport_height = viewport_height_component(default=700) or 700
-available_for_chart = viewport_height - 320
-graph_height = max(450, available_for_chart)
+st.set_page_config(layout="wide")
 
+viewport_height = viewport_height_component(default=1000) or 1000
+graph_height = max(750, viewport_height - 220)
 
+st.write("viewport_height:", viewport_height)
+st.write("graph_height:", graph_height)
 # -------------------------------------------------
 # SIDELAYOUT
 # -------------------------------------------------
