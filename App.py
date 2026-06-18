@@ -9,7 +9,7 @@ viewport_height_component = components.declare_component(
     "viewport_height_component",
     path="viewport_component/frontend"
 )
-viewport_height = viewport_height_component(default=700)
+viewport_height = viewport_height_component(default=700) or 700
 available_for_chart = viewport_height - 320
 graph_height = max(450, available_for_chart)
 
