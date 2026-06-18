@@ -199,7 +199,8 @@ if hendelser_df is not None:
         hendelser_vis["Tid"] = hendelser_vis["DatoTid"].dt.strftime("%d.%m %H:%M")
         hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
         hendelser_vis["Type"] = hendelser_vis[type_col].astype(str) if type_col is not None else ""
-        hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse"]]
+        # BEHOLD DatoTid for hover-match
+        hendelser_vis = hendelser_vis[["DatoTid", "Tid", "Type", "Hendelse"]]
 
         hendelser_lookup_df = hendelser_df[[tid_col, tekst_col]].copy()
         hendelser_lookup_df.columns = ["DatoTid", "Hendelse"]
@@ -218,6 +219,17 @@ def finn_nærmeste_hendelse(ts, events_df, max_diff="45s"):
     if diffs.loc[idx] <= pd.Timedelta(max_diff):
         return str(events_df.loc[idx, "Hendelse"])
     return ""
+
+def finn_nærmeste_hendelse_rad(ts, events_df, max_diff="45s"):
+    if events_df is None or events_df.empty or pd.isna(ts):
+        return None
+
+    diffs = (events_df["DatoTid"] - ts).abs()
+    idx = diffs.idxmin()
+
+    if diffs.loc[idx] <= pd.Timedelta(max_diff):
+        return events_df.loc[idx]
+    return None
 
 def poengendring_ved_hendelse(ts, poeng_df, deltaker_cols):
     if pd.isna(ts):
@@ -273,12 +285,13 @@ for deltaker in deltaker_cols:
 event_texts = []
 for ts in poeng_plot["tid"]:
     event_text = finn_nærmeste_hendelse(ts, hendelser_lookup_df, max_diff="45s")
-    if event_text and hendelser_vis is not None and not hendelser_vis.empty:
-        matching = hendelser_vis.iloc[(hendelser_vis["DatoTid"] - ts).abs().argsort()[:1]]
-        if not matching.empty and (matching.iloc[0]["DatoTid"] - ts).abs() <= pd.Timedelta("45s"):
-            changes_text = poengendring_ved_hendelse(matching.iloc[0]["DatoTid"], poeng_plot, deltaker_cols)
-            if changes_text:
-                event_text = f"{event_text}<br><b>Poengendring:</b><br>{changes_text}"
+    match_row = finn_nærmeste_hendelse_rad(ts, hendelser_vis, max_diff="45s")
+
+    if event_text and match_row is not None:
+        changes_text = poengendring_ved_hendelse(match_row["DatoTid"], poeng_plot, deltaker_cols)
+        if changes_text:
+            event_text = f"{event_text}<br><b>Poengendring:</b><br>{changes_text}"
+
     event_texts.append(event_text)
 
 hover_y = pd.to_numeric(poeng_plot[deltaker_cols[0]], errors="coerce")
