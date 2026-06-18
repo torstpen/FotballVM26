@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <script src="https://unpkg.com/streamlit-component-lib/dist/index.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      function sendHeight() {
+        const viewportHeight = window.innerHeight;
+        Streamlit.setComponentValue(viewportHeight);
+      }
+
+      window.addEventListener("load", sendHeight);
+      window.addEventListener("resize", sendHeight);
+    </script>
+  </body>
+</html>
