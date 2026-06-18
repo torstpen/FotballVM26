@@ -15,12 +15,26 @@
   </head>
   <body>
     <script>
-      function sendHeight() {
-        const h =
-          window.innerHeight ||
-          document.documentElement.clientHeight ||
-          700;
+      function getViewportHeight() {
+        try {
+          return (
+            window.top.innerHeight ||
+            window.parent.innerHeight ||
+            window.innerHeight ||
+            document.documentElement.clientHeight ||
+            700
+          );
+        } catch (e) {
+          return (
+            window.innerHeight ||
+            document.documentElement.clientHeight ||
+            700
+          );
+        }
+      }
 
+      function sendHeight() {
+        const h = getViewportHeight();
         Streamlit.setComponentValue(h);
         Streamlit.setFrameHeight(1);
       }
