@@ -4,13 +4,13 @@ import streamlit as st
 import requests
 from io import BytesIO
 import streamlit.components.v1 as components
-from viewport_component import viewport_height_component
+#from viewport_component import viewport_height_component
 
-st.set_page_config(layout="wide")
+#st.set_page_config(layout="wide")
 
-viewport_height = viewport_height_component(default=1000) or 1000
-graph_height = max(750, viewport_height - 220)
-
+#viewport_height = viewport_height_component(default=1000) or 1000
+#graph_height = max(750, viewport_height - 220)
+graph_height = 600
 #st.write("viewport_height:", viewport_height)
 #st.write("graph_height:", graph_height)
 # -------------------------------------------------
