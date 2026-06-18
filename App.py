@@ -407,7 +407,6 @@ with main_col:
         )
 
 with side_col:
-    st.subheader("🏆 Rangering")
     st.markdown(ranking_html, unsafe_allow_html=True)
 
     st.subheader("⚽ Toppscorere")
