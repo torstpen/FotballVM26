@@ -348,6 +348,27 @@ fig.update_xaxes(
     spikethickness=1.2
 )
 
+# -------------------------------------------------
+# Y-AKSE: zoom inn til nærmeste 5 poeng under/over
+# -------------------------------------------------
+y_values = poeng_plot[deltaker_cols].apply(pd.to_numeric, errors="coerce").to_numpy().ravel()
+y_values = y_values[~pd.isna(y_values)]
+
+if len(y_values) > 0:
+    y_min = float(y_values.min())
+    y_max = float(y_values.max())
+
+    y_lower = int((y_min // 5) * 5)
+    y_upper = int(((y_max + 4) // 5) * 5)
+
+    # Litt ekstra sikkerhet hvis alt er likt
+    if y_lower == y_upper:
+        y_lower -= 5
+        y_upper += 5
+else:
+    y_lower = 0
+    y_upper = 10
+
 fig.update_layout(
     height=graph_height,
     margin=dict(l=0, r=0, t=0, b=0),
@@ -360,6 +381,9 @@ fig.update_layout(
         bgcolor="rgba(255,255,255,0.75)",
         bordercolor="rgba(0,0,0,0.15)",
         font=dict(color="#222")
+    ),
+    yaxis=dict(
+        range=[y_lower, y_upper]
     )
 )
 
