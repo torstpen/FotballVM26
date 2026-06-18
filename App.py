@@ -4,7 +4,7 @@ import streamlit as st
 import requests
 from io import BytesIO
 
-graph_height = 600
+graph_height = 550
 
 # -------------------------------------------------
 # SIDELAYOUT
