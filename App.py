@@ -158,6 +158,7 @@ toppscorere_top3.columns = ["Navn", "Land", "Mål"]
 # HENDELSER
 # -------------------------------------------------
 hendelser_vis = None
+hendelser_lookup_df = None
 
 if hendelser_df is not None:
     hendelser_df.columns = hendelser_df.columns.astype(str).str.strip()
@@ -204,7 +205,6 @@ if hendelser_df is not None:
         else:
             hendelser_vis = siste_24t
 
-        # Sorter igjen nyeste først
         hendelser_vis = hendelser_vis.sort_values("DatoTid", ascending=False)
 
         hendelser_vis["Tid"] = hendelser_vis["DatoTid"].dt.strftime("%d.%m %H:%M")
@@ -217,36 +217,25 @@ if hendelser_df is not None:
 
         hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse"]]
 
+        # DataFrame til nærmeste-match i hover
+        hendelser_lookup_df = hendelser_df[[tid_col, tekst_col]].copy()
+        hendelser_lookup_df.columns = ["DatoTid", "Hendelse"]
+        hendelser_lookup_df["DatoTid"] = pd.to_datetime(hendelser_lookup_df["DatoTid"], errors="coerce")
+        hendelser_lookup_df = hendelser_lookup_df.dropna(subset=["DatoTid", "Hendelse"]).sort_values("DatoTid").reset_index(drop=True)
+
 # -------------------------------------------------
+# FUNKSJON FOR NÆRMESTE HENDELSE
 # -------------------------------------------------
-# HENDELSES-LOOKUP FOR HOVER
-# -------------------------------------------------
-hendelse_lookup = {}
+def finn_nærmeste_hendelse(ts, events_df, max_diff="45s"):
+    if events_df is None or events_df.empty or pd.isna(ts):
+        return ""
 
-if hendelser_df is not None:
-    tmp = hendelser_df.copy()
-    tmp.columns = tmp.columns.astype(str).str.strip()
+    diffs = (events_df["DatoTid"] - ts).abs()
+    idx = diffs.idxmin()
 
-    tid_col = None
-    tekst_col = None
-
-    for col in tmp.columns:
-        low = col.lower()
-        if "tid" in low or "time" in low or "dato" in low:
-            tid_col = col
-        elif "hend" in low or "event" in low or "beskjed" in low or "tekst" in low:
-            tekst_col = col
-
-    if tid_col is not None and tekst_col is not None:
-        tmp["DatoTid"] = pd.to_datetime(tmp[tid_col], errors="coerce")
-        tmp = tmp.dropna(subset=["DatoTid", tekst_col])
-        tmp["DatoTid"] = tmp["DatoTid"].dt.floor("min")
-
-        hendelse_lookup = (
-            tmp.groupby("DatoTid")[tekst_col]
-            .apply(lambda s: "<br>".join(s.astype(str)))
-            .to_dict()
-        )
+    if diffs.loc[idx] <= pd.Timedelta(max_diff):
+        return str(events_df.loc[idx, "Hendelse"])
+    return ""
 
 # -------------------------------------------------
 # PLOT
@@ -255,17 +244,6 @@ poeng_plot = poeng_df.copy()
 poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
 poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 
-# Finn deltakerkolonner
-deltaker_cols = [c for c in poeng_plot.columns if c not in ["tid", "row_id"]]
-
-# -------------------------------------------------
-# PLOT
-# -------------------------------------------------
-poeng_plot = poeng_df.copy()
-poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
-poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
-
-# Finn deltakerkolonner
 deltaker_cols = [c for c in poeng_plot.columns if c not in ["tid", "row_id"]]
 
 fig = go.Figure()
@@ -285,27 +263,27 @@ for deltaker in deltaker_cols:
         )
     )
 
-# Lag én usynlig hover-trace som bare viser hendelse
-if hendelse_lookup:
-    hover_text = [
-        hendelse_lookup.get(ts.floor("min"), "") if pd.notna(ts) else ""
-        for ts in poeng_plot["tid"]
-    ]
+# Hover-tekst basert på nærmeste hendelse
+event_texts = [
+    finn_nærmeste_hendelse(ts, hendelser_lookup_df, max_diff="45s")
+    for ts in poeng_plot["tid"]
+]
 
-    fig.add_trace(
-        go.Scatter(
-            x=poeng_plot["tid"],
-            y=[None] * len(poeng_plot),
-            mode="markers",
-            marker=dict(size=12, opacity=0),
-            showlegend=False,
-            hovertext=hover_text,
-            hovertemplate=(
-                "<b>%{x|%d.%m %H:%M}</b><br>"
-                "%{hovertext}<extra></extra>"
-            )
+# Usynlig trace som viser hovertekst
+fig.add_trace(
+    go.Scatter(
+        x=poeng_plot["tid"],
+        y=[None] * len(poeng_plot),
+        mode="markers",
+        marker=dict(size=12, opacity=0),
+        showlegend=False,
+        hovertext=event_texts,
+        hovertemplate=(
+            "<b>%{x|%d.%m %H:%M:%S}</b><br>"
+            "%{hovertext}<extra></extra>"
         )
     )
+)
 
 # Slå sammen navn for samme poengnivå på siste tidspunkt
 last_row = poeng_plot.iloc[-1]
@@ -337,62 +315,12 @@ if not label_df.empty:
         )
     )
 
-# Start zoomet inn på de siste 24 timene
 fig.update_xaxes(
     range=[now - pd.Timedelta(hours=24), now]
 )
 
 fig.update_layout(
     hovermode="closest",
-    height=560,
-    margin=dict(l=10, r=20, t=20, b=10),
-    legend_title_text="",
-    legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="left",
-        x=0
-    )
-)
-
-# Slå sammen navn for samme poengnivå på siste tidspunkt
-last_row = poeng_plot.iloc[-1]
-last_points = []
-
-for deltaker in deltaker_cols:
-    poeng = pd.to_numeric(pd.Series([last_row[deltaker]]), errors="coerce").iloc[0]
-    if pd.notna(poeng):
-        last_points.append({"Deltaker": str(deltaker), "Poeng": poeng})
-
-last_points = pd.DataFrame(last_points)
-
-label_df = (
-    last_points.groupby("Poeng")["Deltaker"]
-    .apply(lambda s: ", ".join(s.sort_values().astype(str)))
-    .reset_index()
-)
-
-if not label_df.empty:
-    fig.add_trace(
-        go.Scatter(
-            x=[now] * len(label_df),
-            y=label_df["Poeng"] + 0.3,
-            mode="text",
-            text=label_df["Deltaker"],
-            textposition="middle left",
-            showlegend=False,
-            hoverinfo="skip"
-        )
-    )
-
-# Start zoomet inn på de siste 24 timene
-fig.update_xaxes(
-    range=[now - pd.Timedelta(hours=24), now]
-)
-
-fig.update_layout(
-    hovermode="x",
     height=560,
     margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
