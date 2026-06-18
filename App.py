@@ -290,7 +290,7 @@ for ts in poeng_plot["tid"]:
     if event_text and match_row is not None:
         changes_text = poengendring_ved_hendelse(match_row["DatoTid"], poeng_plot, deltaker_cols)
         if changes_text:
-            event_text = f"{event_text}<br><b>Poengendring:</b><br>{changes_text}"
+            event_text = f"{event_text}<br>{changes_text}"
 
     event_texts.append(event_text)
 
@@ -305,7 +305,6 @@ fig.add_trace(
         showlegend=False,
         customdata=event_texts,
         hovertemplate=(
-            "<b>%{x|%d.%m %H:%M:%S}</b><br>"
             "%{customdata}<extra></extra>"
         )
     )
