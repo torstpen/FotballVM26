@@ -354,6 +354,11 @@ fig.update_layout(
     margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0)
+    hoverlabel=dict(
+    bgcolor="rgba(255, 255, 255, 0.75)",
+    bordercolor="rgba(0, 0, 0, 0.15)",
+    font=dict(color="#222")
+)
 )
 
 # -------------------------------------------------
