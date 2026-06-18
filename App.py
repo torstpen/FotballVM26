@@ -218,6 +218,36 @@ if hendelser_df is not None:
         hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse"]]
 
 # -------------------------------------------------
+# HENDELSES-LOOKUP FOR HOVER
+# -------------------------------------------------
+hendelse_lookup = {}
+
+if hendelser_df is not None:
+    tmp = hendelser_df.copy()
+    tmp.columns = tmp.columns.astype(str).str.strip()
+
+    tid_col = None
+    tekst_col = None
+
+    for col in tmp.columns:
+        low = col.lower()
+        if "tid" in low or "time" in low or "dato" in low:
+            tid_col = col
+        elif "hend" in low or "event" in low or "beskjed" in low or "tekst" in low:
+            tekst_col = col
+
+    if tid_col is not None and tekst_col is not None:
+        tmp["DatoTid"] = pd.to_datetime(tmp[tid_col], errors="coerce")
+        tmp = tmp.dropna(subset=["DatoTid", tekst_col])
+
+        # Bruk nøyaktig samme tidsstempel som i grafen
+        hendelse_lookup = (
+            tmp.groupby("DatoTid")[tekst_col]
+            .apply(lambda s: "<br>".join(s.astype(str)))
+            .to_dict()
+        )
+
+# -------------------------------------------------
 # PLOT
 # -------------------------------------------------
 poeng_plot = poeng_df.copy()
@@ -232,13 +262,23 @@ fig = go.Figure()
 for deltaker in deltaker_cols:
     y = pd.to_numeric(poeng_plot[deltaker], errors="coerce")
 
+    hovertext = [
+        hendelse_lookup.get(ts, "") if pd.notna(ts) else ""
+        for ts in poeng_plot["tid"]
+    ]
+
     fig.add_trace(
         go.Scatter(
             x=poeng_plot["tid"],
             y=y,
             mode="lines",
             name=str(deltaker),
-            line_shape="hv"
+            line_shape="hv",
+            customdata=hovertext,
+            hovertemplate=(
+                "<b>%{x|%d.%m %H:%M}</b><br>"
+                "%{customdata}<extra></extra>"
+            )
         )
     )
 
