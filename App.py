@@ -217,7 +217,6 @@ if hendelser_df is not None:
 
         hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse"]]
 
-        # DataFrame til nærmeste-match i hover
         hendelser_lookup_df = hendelser_df[[tid_col, tekst_col]].copy()
         hendelser_lookup_df.columns = ["DatoTid", "Hendelse"]
         hendelser_lookup_df["DatoTid"] = pd.to_datetime(hendelser_lookup_df["DatoTid"], errors="coerce")
@@ -269,16 +268,15 @@ event_texts = [
     for ts in poeng_plot["tid"]
 ]
 
-# Legg hover på en usynlig men faktisk plottet trace
-hover_y = poeng_plot[deltaker_cols[0]].copy()
-hover_y = pd.to_numeric(hover_y, errors="coerce")
+# Hover-trace med faktisk y-verdi, men nesten usynlig
+hover_y = pd.to_numeric(poeng_plot[deltaker_cols[0]], errors="coerce")
 
 fig.add_trace(
     go.Scatter(
         x=poeng_plot["tid"],
         y=hover_y,
         mode="markers",
-        marker=dict(size=18, opacity=0.001),  # nesten usynlig, men hoverbar
+        marker=dict(size=18, opacity=0.001),
         showlegend=False,
         customdata=event_texts,
         hovertemplate=(
@@ -319,7 +317,12 @@ if not label_df.empty:
     )
 
 fig.update_xaxes(
-    range=[now - pd.Timedelta(hours=24), now]
+    range=[now - pd.Timedelta(hours=24), now],
+    showspikes=True,
+    spikemode="across",
+    spikesnap="cursor",
+    spikecolor="rgba(80,80,80,0.7)",
+    spikethickness=1.2
 )
 
 fig.update_layout(
