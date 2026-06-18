@@ -9,6 +9,10 @@ viewport_height_component = components.declare_component(
     "viewport_height_component",
     path="viewport_component/frontend"
 )
+viewport_height = viewport_height_component(default=700)
+available_for_chart = viewport_height - 320
+graph_height = max(450, available_for_chart)
+
 
 # -------------------------------------------------
 # SIDELAYOUT
@@ -353,7 +357,7 @@ fig.update_xaxes(
 )
 
 fig.update_layout(
-    height=520,
+    height=graph_height,
     margin=dict(l=0, r=0, t=0, b=0),
     hovermode="x",
     hoverdistance=20,
