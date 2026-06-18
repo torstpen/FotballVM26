@@ -218,6 +218,7 @@ if hendelser_df is not None:
         hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse"]]
 
 # -------------------------------------------------
+# -------------------------------------------------
 # HENDELSES-LOOKUP FOR HOVER
 # -------------------------------------------------
 hendelse_lookup = {}
@@ -239,8 +240,8 @@ if hendelser_df is not None:
     if tid_col is not None and tekst_col is not None:
         tmp["DatoTid"] = pd.to_datetime(tmp[tid_col], errors="coerce")
         tmp = tmp.dropna(subset=["DatoTid", tekst_col])
+        tmp["DatoTid"] = tmp["DatoTid"].dt.floor("min")
 
-        # Bruk nøyaktig samme tidsstempel som i grafen
         hendelse_lookup = (
             tmp.groupby("DatoTid")[tekst_col]
             .apply(lambda s: "<br>".join(s.astype(str)))
@@ -257,15 +258,21 @@ poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 # Finn deltakerkolonner
 deltaker_cols = [c for c in poeng_plot.columns if c not in ["tid", "row_id"]]
 
+# -------------------------------------------------
+# PLOT
+# -------------------------------------------------
+poeng_plot = poeng_df.copy()
+poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
+poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
+
+# Finn deltakerkolonner
+deltaker_cols = [c for c in poeng_plot.columns if c not in ["tid", "row_id"]]
+
 fig = go.Figure()
 
+# Synlige linjer uten hover
 for deltaker in deltaker_cols:
     y = pd.to_numeric(poeng_plot[deltaker], errors="coerce")
-
-    hovertext = [
-        hendelse_lookup.get(ts, "") if pd.notna(ts) else ""
-        for ts in poeng_plot["tid"]
-    ]
 
     fig.add_trace(
         go.Scatter(
@@ -274,13 +281,80 @@ for deltaker in deltaker_cols:
             mode="lines",
             name=str(deltaker),
             line_shape="hv",
-            customdata=hovertext,
+            hoverinfo="skip"
+        )
+    )
+
+# Lag én usynlig hover-trace som bare viser hendelse
+if hendelse_lookup:
+    hover_text = [
+        hendelse_lookup.get(ts.floor("min"), "") if pd.notna(ts) else ""
+        for ts in poeng_plot["tid"]
+    ]
+
+    fig.add_trace(
+        go.Scatter(
+            x=poeng_plot["tid"],
+            y=[None] * len(poeng_plot),
+            mode="markers",
+            marker=dict(size=12, opacity=0),
+            showlegend=False,
+            hovertext=hover_text,
             hovertemplate=(
                 "<b>%{x|%d.%m %H:%M}</b><br>"
-                "%{customdata}<extra></extra>"
+                "%{hovertext}<extra></extra>"
             )
         )
     )
+
+# Slå sammen navn for samme poengnivå på siste tidspunkt
+last_row = poeng_plot.iloc[-1]
+last_points = []
+
+for deltaker in deltaker_cols:
+    poeng = pd.to_numeric(pd.Series([last_row[deltaker]]), errors="coerce").iloc[0]
+    if pd.notna(poeng):
+        last_points.append({"Deltaker": str(deltaker), "Poeng": poeng})
+
+last_points = pd.DataFrame(last_points)
+
+label_df = (
+    last_points.groupby("Poeng")["Deltaker"]
+    .apply(lambda s: ", ".join(s.sort_values().astype(str)))
+    .reset_index()
+)
+
+if not label_df.empty:
+    fig.add_trace(
+        go.Scatter(
+            x=[now] * len(label_df),
+            y=label_df["Poeng"] + 0.3,
+            mode="text",
+            text=label_df["Deltaker"],
+            textposition="middle left",
+            showlegend=False,
+            hoverinfo="skip"
+        )
+    )
+
+# Start zoomet inn på de siste 24 timene
+fig.update_xaxes(
+    range=[now - pd.Timedelta(hours=24), now]
+)
+
+fig.update_layout(
+    hovermode="closest",
+    height=560,
+    margin=dict(l=10, r=20, t=20, b=10),
+    legend_title_text="",
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="left",
+        x=0
+    )
+)
 
 # Slå sammen navn for samme poengnivå på siste tidspunkt
 last_row = poeng_plot.iloc[-1]
