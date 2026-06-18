@@ -147,7 +147,7 @@ if missing:
     st.write("Fant disse kolonnene:", toppscorere_df.columns.tolist())
     st.stop()
 
-toppscorere_top3 = toppscorere_df[[col_map["Navn"], col_map["Land"], col_map["Mål"]]].head(5)
+toppscorere_top3 = toppscorere_df[[col_map["Navn"], col_map["Land"], col_map["Mål"]]].head(10)
 toppscorere_top3.columns = ["Navn", "Land", "Mål"]
 
 # -------------------------------------------------
