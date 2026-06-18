@@ -57,7 +57,6 @@ now = (pd.Timestamp.now(tz="Europe/Oslo") + pd.Timedelta(hours=2)).floor("min").
 latest_row = poeng_df.iloc[-1].copy()
 latest_row["tid"] = now
 latest_row["row_id"] = poeng_df["row_id"].max() + 1
-
 poeng_df = pd.concat([poeng_df, pd.DataFrame([latest_row])], ignore_index=True)
 
 # -------------------------------------------------
@@ -66,16 +65,12 @@ poeng_df = pd.concat([poeng_df, pd.DataFrame([latest_row])], ignore_index=True)
 latest = poeng_df.iloc[-2]
 ranking_df = latest.drop(["tid", "row_id"]).reset_index()
 ranking_df.columns = ["Deltaker", "Poeng"]
-
 ranking_df["Poeng"] = pd.to_numeric(ranking_df["Poeng"], errors="coerce")
 ranking_df = ranking_df.dropna(subset=["Poeng"])
 ranking_df = ranking_df.sort_values(["Poeng", "Deltaker"], ascending=[False, True]).reset_index(drop=True)
-
 ranking_df["Plass"] = ranking_df["Poeng"].rank(method="min", ascending=False).astype("Int64")
-
 medals = {1: "🥇", 2: "🥈", 3: "🥉"}
 ranking_df["Medalje"] = ranking_df["Plass"].map(medals).fillna("")
-
 ranking_df = ranking_df[["Plass", "Medalje", "Deltaker", "Poeng"]].head(12)
 
 rows_html = "\n".join(
@@ -145,7 +140,6 @@ for col in toppscorere_df.columns:
         col_map["Mål"] = col
 
 missing = [k for k in ["Navn", "Land", "Mål"] if k not in col_map]
-
 if missing:
     st.error(f"Mangler kolonner i arket Toppscorere: {missing}")
     st.write("Fant disse kolonnene:", toppscorere_df.columns.tolist())
@@ -204,13 +198,8 @@ if hendelser_df is not None:
 
         hendelser_vis["Tid"] = hendelser_vis["DatoTid"].dt.strftime("%d.%m %H:%M")
         hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
-
-        if type_col is not None:
-            hendelser_vis["Type"] = hendelser_vis[type_col].astype(str)
-        else:
-            hendelser_vis["Type"] = ""
-
-        hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse", "DatoTid"]]
+        hendelser_vis["Type"] = hendelser_vis[type_col].astype(str) if type_col is not None else ""
+        hendelser_vis = hendelser_vis[["Tid", "Type", "Hendelse"]]
 
         hendelser_lookup_df = hendelser_df[[tid_col, tekst_col]].copy()
         hendelser_lookup_df.columns = ["DatoTid", "Hendelse"]
@@ -218,7 +207,7 @@ if hendelser_df is not None:
         hendelser_lookup_df = hendelser_lookup_df.dropna(subset=["DatoTid", "Hendelse"]).sort_values("DatoTid").reset_index(drop=True)
 
 # -------------------------------------------------
-# FUNKSJON FOR NÆRMESTE HENDELSE
+# HJELPEFUNKSJONER
 # -------------------------------------------------
 def finn_nærmeste_hendelse(ts, events_df, max_diff="45s"):
     if events_df is None or events_df.empty or pd.isna(ts):
@@ -226,14 +215,10 @@ def finn_nærmeste_hendelse(ts, events_df, max_diff="45s"):
 
     diffs = (events_df["DatoTid"] - ts).abs()
     idx = diffs.idxmin()
-
     if diffs.loc[idx] <= pd.Timedelta(max_diff):
         return str(events_df.loc[idx, "Hendelse"])
     return ""
 
-# -------------------------------------------------
-# FUNKSJON FOR POENGENDRING
-# -------------------------------------------------
 def poengendring_ved_hendelse(ts, poeng_df, deltaker_cols):
     if pd.isna(ts):
         return ""
@@ -244,19 +229,22 @@ def poengendring_ved_hendelse(ts, poeng_df, deltaker_cols):
     if before.empty or after.empty:
         return ""
 
-    changes = []
-
+    diffs = {}
     for deltaker in deltaker_cols:
         b = pd.to_numeric(before.iloc[0][deltaker], errors="coerce")
         a = pd.to_numeric(after.iloc[0][deltaker], errors="coerce")
-
         if pd.notna(b) and pd.notna(a):
             diff = a - b
             if diff != 0:
-                sign = "+" if diff > 0 else ""
-                changes.append(f"{deltaker} {sign}{int(diff)}")
+                diffs.setdefault(int(diff), []).append(str(deltaker))
 
-    return ", ".join(changes)
+    parts = []
+    for diff in sorted(diffs.keys(), reverse=True):
+        sign = "+" if diff > 0 else ""
+        navn = ", ".join(sorted(diffs[diff]))
+        parts.append(f"{sign}{diff} {navn}")
+
+    return "<br>".join(parts)
 
 # -------------------------------------------------
 # PLOT
@@ -271,7 +259,6 @@ fig = go.Figure()
 
 for deltaker in deltaker_cols:
     y = pd.to_numeric(poeng_plot[deltaker], errors="coerce")
-
     fig.add_trace(
         go.Scatter(
             x=poeng_plot["tid"],
@@ -285,23 +272,14 @@ for deltaker in deltaker_cols:
 
 event_texts = []
 for ts in poeng_plot["tid"]:
-    base_text = finn_nærmeste_hendelse(ts, hendelser_lookup_df, max_diff="45s")
-    match_row = None
-    changes_text = ""
-
-    if hendelser_vis is not None and not hendelser_vis.empty:
-        diffs = (hendelser_vis["DatoTid"] - ts).abs()
-        idx = diffs.idxmin()
-        if diffs.loc[idx] <= pd.Timedelta("45s"):
-            match_row = hendelser_vis.loc[idx]
-            changes_text = poengendring_ved_hendelse(match_row["DatoTid"], poeng_plot, deltaker_cols)
-
-    if base_text and changes_text:
-        event_texts.append(f"{base_text}<br><b>Endring:</b> {changes_text}")
-    elif base_text:
-        event_texts.append(base_text)
-    else:
-        event_texts.append("")
+    event_text = finn_nærmeste_hendelse(ts, hendelser_lookup_df, max_diff="45s")
+    if event_text and hendelser_vis is not None and not hendelser_vis.empty:
+        matching = hendelser_vis.iloc[(hendelser_vis["DatoTid"] - ts).abs().argsort()[:1]]
+        if not matching.empty and (matching.iloc[0]["DatoTid"] - ts).abs() <= pd.Timedelta("45s"):
+            changes_text = poengendring_ved_hendelse(matching.iloc[0]["DatoTid"], poeng_plot, deltaker_cols)
+            if changes_text:
+                event_text = f"{event_text}<br><b>Poengendring:</b><br>{changes_text}"
+    event_texts.append(event_text)
 
 hover_y = pd.to_numeric(poeng_plot[deltaker_cols[0]], errors="coerce")
 
@@ -322,14 +300,12 @@ fig.add_trace(
 
 last_row = poeng_plot.iloc[-1]
 last_points = []
-
 for deltaker in deltaker_cols:
     poeng = pd.to_numeric(pd.Series([last_row[deltaker]]), errors="coerce").iloc[0]
     if pd.notna(poeng):
         last_points.append({"Deltaker": str(deltaker), "Poeng": poeng})
 
 last_points = pd.DataFrame(last_points)
-
 label_df = (
     last_points.groupby("Poeng")["Deltaker"]
     .apply(lambda s: ", ".join(s.sort_values().astype(str)))
@@ -365,13 +341,7 @@ fig.update_layout(
     height=560,
     margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
-    legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.02,
-        xanchor="left",
-        x=0
-    )
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0)
 )
 
 # -------------------------------------------------
@@ -389,17 +359,8 @@ with main_col:
     elif hendelser_vis.empty:
         st.info("Ingen hendelser funnet i arket.")
     else:
-        html_items = ""
-        for _, row in hendelser_vis.iterrows():
-            changes = poengendring_ved_hendelse(row["DatoTid"], poeng_plot, deltaker_cols)
-
-            change_html = f"""
-                <div style="font-size:0.82rem; color:#2b7a2b; margin-bottom:3px;">
-                    {changes}
-                </div>
-            """ if changes else ""
-
-            html_items += f"""
+        html_items = "".join(
+            f"""
             <div style="
                 display:inline-block;
                 vertical-align:top;
@@ -415,9 +376,10 @@ with main_col:
                 <div style="font-weight:600; margin-bottom:3px;">{row.Tid}</div>
                 <div style="font-size:0.82rem; color:#666; margin-bottom:3px;">{row.Type}</div>
                 <div style="line-height:1.3;">{row.Hendelse}</div>
-                {change_html}
             </div>
             """
+            for _, row in hendelser_vis.iterrows()
+        )
 
         st.markdown(
             f"""
@@ -433,8 +395,4 @@ with side_col:
     st.markdown(ranking_html, unsafe_allow_html=True)
 
     st.subheader("⚽ Toppscorere")
-    st.dataframe(
-        toppscorere_top3,
-        use_container_width=True,
-        hide_index=True
-    )
+    st.dataframe(toppscorere_top3, use_container_width=True, hide_index=True)
