@@ -188,7 +188,7 @@ if hendelser_df is not None:
         hendelser_vis = hendelser_df[cols].copy()
         hendelser_vis["DatoTid"] = pd.to_datetime(hendelser_vis[tid_col], errors="coerce")
         hendelser_vis = hendelser_vis.dropna(subset=["DatoTid", tekst_col])
-        hendelser_vis = hendelser_vis.sort_values("DatoTid", ascending=False)
+        hendelser_vis = hendelser_vis.sort_values("DatoTid", ascending=False).head(20)
 
         hendelser_vis["Tid"] = hendelser_vis["DatoTid"].dt.strftime("%d.%m %H:%M")
         hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
