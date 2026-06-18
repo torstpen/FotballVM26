@@ -3,6 +3,12 @@ import plotly.graph_objects as go
 import streamlit as st
 import requests
 from io import BytesIO
+import streamlit.components.v1 as components
+
+viewport_height_component = components.declare_component(
+    "viewport_height_component",
+    path="viewport_component/frontend"
+)
 
 # -------------------------------------------------
 # SIDELAYOUT
