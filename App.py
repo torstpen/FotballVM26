@@ -350,7 +350,7 @@ fig.update_layout(
     hovermode="x",
     hoverdistance=20,
     spikedistance=-1,
-    height=700,
+    height=650,
     margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
