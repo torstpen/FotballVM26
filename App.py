@@ -11,8 +11,8 @@ st.set_page_config(layout="wide")
 viewport_height = viewport_height_component(default=1000) or 1000
 graph_height = max(750, viewport_height - 220)
 
-st.write("viewport_height:", viewport_height)
-st.write("graph_height:", graph_height)
+#st.write("viewport_height:", viewport_height)
+#st.write("graph_height:", graph_height)
 # -------------------------------------------------
 # SIDELAYOUT
 # -------------------------------------------------
