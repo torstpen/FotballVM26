@@ -351,17 +351,24 @@ fig.update_xaxes(
 # -------------------------------------------------
 # Y-AKSE: zoom inn til nærmeste 5 poeng under/over
 # -------------------------------------------------
-y_values = poeng_plot[deltaker_cols].apply(pd.to_numeric, errors="coerce").to_numpy().ravel()
+visible_df = poeng_plot[
+    (poeng_plot["tid"] >= now - pd.Timedelta(hours=24)) &
+    (poeng_plot["tid"] <= now)
+].copy()
+
+y_values = visible_df[deltaker_cols].apply(pd.to_numeric, errors="coerce").to_numpy().ravel()
 y_values = y_values[~pd.isna(y_values)]
 
 if len(y_values) > 0:
     y_min = float(y_values.min())
     y_max = float(y_values.max())
 
-    y_lower = int((y_min // 5) * 5)
-    y_upper = int(((y_max + 4) // 5) * 5)
+    # NED: ned til nærmeste 5 under minimum
+    y_lower = int(y_min // 5) * 5
 
-    # Litt ekstra sikkerhet hvis alt er likt
+    # OPP: opp til nærmeste 5 over maksimum
+    y_upper = int((-(-y_max // 5))) * 5  # ceil til nærmeste 5
+
     if y_lower == y_upper:
         y_lower -= 5
         y_upper += 5
