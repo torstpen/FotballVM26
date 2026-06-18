@@ -350,7 +350,7 @@ fig.update_layout(
     hovermode="x",
     hoverdistance=20,
     spikedistance=-1,
-    height=560,
+    height=720,
     margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
@@ -368,10 +368,8 @@ fig.update_layout(
 main_col, side_col = st.columns([5.8, 1.8], gap="large")
 
 with main_col:
-    st.subheader("📈 Poenggraf")
     st.plotly_chart(fig, use_container_width=True)
 
-    st.subheader("📝 Hendelser")
     if hendelser_vis is None:
         st.info(f"Fant ikke brukbare kolonner i arket 'Hendelser'. Tilgjengelige ark: {sheet_names}")
     elif hendelser_vis.empty:
