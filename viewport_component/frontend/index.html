@@ -16,9 +16,15 @@
       function sendHeight() {
         const viewportHeight = window.innerHeight;
         Streamlit.setComponentValue(viewportHeight);
+        Streamlit.setFrameHeight(1);
       }
 
-      window.addEventListener("load", sendHeight);
+      function init() {
+        Streamlit.setComponentReady();
+        sendHeight();
+      }
+
+      window.addEventListener("load", init);
       window.addEventListener("resize", sendHeight);
     </script>
   </body>
