@@ -347,18 +347,18 @@ fig.update_xaxes(
 )
 
 fig.update_layout(
+    height=520,
+    margin=dict(l=0, r=0, t=0, b=0),
     hovermode="x",
     hoverdistance=20,
     spikedistance=-1,
-    height=650,
-    margin=dict(l=10, r=20, t=20, b=10),
     legend_title_text="",
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
     hoverlabel=dict(
-    bgcolor="rgba(255,255,255,0.6)",
-    bordercolor="rgba(0,0,0,0.08)",
-    font=dict(color="#222", size=13),
-    align="left"
+        bgcolor="rgba(255,255,255,0.75)",
+        bordercolor="rgba(0,0,0,0.15)",
+        font=dict(color="#222")
+    )
 )
 )
 
