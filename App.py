@@ -272,6 +272,11 @@ if not label_df.empty:
         )
     )
 
+# Start zoomet inn på de siste 24 timene
+fig.update_xaxes(
+    range=[now - pd.Timedelta(hours=24), now]
+)
+
 fig.update_layout(
     hovermode="x unified",
     height=560,
