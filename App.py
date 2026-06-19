@@ -233,12 +233,12 @@ def finn_nærmeste_hendelse_rad(ts, events_df, max_diff="45s"):
         return events_df.loc[idx]
     return None
 
-def poengendring_ved_hendelse(ts, poeng_df, deltaker_cols):
+def poengendring_ved_hendelse(ts, poeng_df, deltaker_cols, vindu="30s"):
     if pd.isna(ts):
         return ""
 
-    before = poeng_df[poeng_df["tid"] <= ts].tail(1)
-    after = poeng_df[poeng_df["tid"] >= ts].head(1)
+    before = poeng_df[poeng_df["tid"] <= ts - pd.Timedelta(vindu)].tail(1)
+    after = poeng_df[poeng_df["tid"] >= ts + pd.Timedelta(vindu)].head(1)
 
     if before.empty or after.empty:
         return ""
