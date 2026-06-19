@@ -48,7 +48,7 @@ poeng_df, toppscorere_df, hendelser_df, sheet_names = load_data()
 # -------------------------------------------------
 # KONVERTER TID
 # -------------------------------------------------
-poeng_df["tid"] = pd.to_datetime(poeng_df["tid"], errors="coerce", unit="D", origin="1899-12-30")
+poeng_df["tid"] = pd.to_datetime(poeng_df["tid"], dayfirst=True, errors="coerce")
 poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
