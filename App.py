@@ -14,7 +14,7 @@ st.set_page_config(layout="wide")
 URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=30)
 def load_data():
     r = requests.get(URL, timeout=20)
     r.raise_for_status()
