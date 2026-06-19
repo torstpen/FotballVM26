@@ -287,7 +287,7 @@ for deltaker in deltaker_cols:
 event_texts = []
 for ts in poeng_plot["tid"]:
     event_text = finn_nærmeste_hendelse(ts, hendelser_lookup_df, max_diff="45s")
-    match_row = finn_nærmeste_hendelse_rad(ts, hendelser_vis, max_diff="45s")
+    match_row = finn_nærmeste_hendelse_rad(ts, hendelser_lookup_df, max_diff="45s")
 
     if event_text and match_row is not None:
         changes_text = poengendring_ved_hendelse(match_row["DatoTid"], poeng_plot, deltaker_cols)
