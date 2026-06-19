@@ -13,6 +13,10 @@ st.set_page_config(layout="wide")
 
 URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
 
+def excel_tid_til_datetime(series):
+    if pd.api.types.is_numeric_dtype(series):
+        return pd.to_datetime(series, unit="D", origin="1899-12-30")
+    return pd.to_datetime(series, errors="coerce")
 
 @st.cache_data(ttl=30)
 def load_data():
@@ -183,7 +187,7 @@ if hendelser_df is not None:
             cols.append(type_col)
 
         hendelser_vis = hendelser_df[cols].copy()
-        hendelser_vis["DatoTid"] = pd.to_datetime(hendelser_vis[tid_col], errors="coerce")
+        hendelser_vis["DatoTid"] = excel_tid_til_datetime(hendelser_vis[tid_col])
         hendelser_vis = hendelser_vis.dropna(subset=["DatoTid", tekst_col])
 
         cutoff = pd.Timestamp.now() - pd.Timedelta(hours=24)
@@ -206,7 +210,7 @@ if hendelser_df is not None:
 
         hendelser_lookup_df = hendelser_df[[tid_col, tekst_col]].copy()
         hendelser_lookup_df.columns = ["DatoTid", "Hendelse"]
-        hendelser_lookup_df["DatoTid"] = pd.to_datetime(hendelser_lookup_df["DatoTid"], errors="coerce")
+        hendelser_lookup_df["DatoTid"] = excel_tid_til_datetime(hendelser_lookup_df["DatoTid"])
         hendelser_lookup_df = hendelser_lookup_df.dropna(subset=["DatoTid", "Hendelse"]).sort_values("DatoTid").reset_index(drop=True)
 
 # -------------------------------------------------
