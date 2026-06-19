@@ -14,16 +14,12 @@ st.set_page_config(layout="wide")
 URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
 
 def excel_tid_til_datetime(series):
-    dt = pd.to_datetime(series, unit="D", origin="1899-12-30", errors="coerce")
+    if pd.api.types.is_numeric_dtype(series):
+        dt = pd.to_datetime(series, unit="D", origin="1899-12-30", errors="coerce")
+    else:
+        dt = pd.to_datetime(series, errors="coerce")
 
-    # sikre Series
-    dt = pd.Series(dt)
-
-    # hvis allerede tz-aware → returner direkte
-    if getattr(dt.dt, "tz", None) is not None:
-        return dt
-
-    return dt.dt.tz_localize("Europe/Oslo")
+    return dt.dt.tz_localize("Europe/Oslo", nonexistent="NaT", ambiguous="NaT")
 
 @st.cache_data(ttl=30)
 def load_data():
