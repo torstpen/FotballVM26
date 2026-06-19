@@ -52,14 +52,18 @@ poeng_df, toppscorere_df, hendelser_df, sheet_names = load_data()
 # -------------------------------------------------
 # KONVERTER TID
 # -------------------------------------------------
-poeng_df["tid"] = pd.to_datetime(poeng_df["tid"].astype(float), unit="D", origin="1899-12-30")
+poeng_df["tid"] = pd.to_datetime(
+    poeng_df["tid"].astype(float),
+    unit="D",
+    origin="1899-12-30"
+).dt.tz_localize("Europe/Oslo")
 poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
 # -------------------------------------------------
 # LEGG TIL EKSTRA PUNKT MED NÅTID (NORSK TID)
 # -------------------------------------------------
-now = (pd.Timestamp.now(tz="Europe/Oslo") + pd.Timedelta(hours=2)).floor("min").tz_convert(None)
+now = pd.Timestamp.now(tz="Europe/Oslo").floor("min")
 latest_row = poeng_df.iloc[-1].copy()
 latest_row["tid"] = now
 latest_row["row_id"] = poeng_df["row_id"].max() + 1
