@@ -10,7 +10,7 @@ graph_height = 700
 # SIDELAYOUT
 # -------------------------------------------------
 st.set_page_config(layout="wide")
-
+OSLO = "Europe/Oslo"
 URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
 
 def excel_tid_til_datetime(series):
@@ -20,6 +20,28 @@ def excel_tid_til_datetime(series):
         dt = pd.to_datetime(series, errors="coerce")
 
     return dt.dt.tz_localize("Europe/Oslo", nonexistent="NaT", ambiguous="NaT")
+
+def to_oslo_datetime(series):
+    """
+    Standardiserer ALL input til tz-aware Europe/Oslo datetime.
+    Støtter:
+    - Excel serial numbers
+    - strings
+    - datetime
+    """
+
+    # 1) forsøk vanlig parsing først (strings/datetime)
+    dt = pd.to_datetime(series, errors="coerce")
+
+    # 2) hvis dette gir mye NaT → fallback til Excel serial
+    if dt.notna().sum() == 0:
+        dt = pd.to_datetime(series, unit="D", origin="1899-12-30", errors="coerce")
+
+    # 3) gjør ALT til Oslo tz-aware
+    if getattr(dt.dt, "tz", None) is None:
+        return dt.dt.tz_localize(OSLO)
+
+    return dt.dt.tz_convert(OSLO)
 
 @st.cache_data(ttl=30)
 def load_data():
@@ -197,7 +219,7 @@ if hendelser_df is not None:
         hendelser_vis["DatoTid"] = excel_tid_til_datetime(hendelser_vis[tid_col])
         hendelser_vis = hendelser_vis.dropna(subset=["DatoTid", tekst_col])
 
-        cutoff = pd.Timestamp.now() - pd.Timedelta(hours=24)
+        cutoff = pd.Timestamp.now(tz="Europe/Oslo") - pd.Timedelta(hours=24)
         siste_24t = hendelser_vis[hendelser_vis["DatoTid"] >= cutoff]
 
         if len(siste_24t) < 20:
