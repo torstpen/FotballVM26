@@ -266,30 +266,27 @@ def finn_nærmeste_hendelse_rad(ts, events_df, max_diff="45s"):
         return events_df.loc[idx]
     return None
 
-def poengendring_ved_hendelse(ts, poeng_df, deltaker_cols, vindu="30s"):
-    if pd.isna(ts):
+def poengendring_ved_rad(ts, poeng_df, deltaker_cols):
+    after_rows  = poeng_df[poeng_df["tid"] == ts]
+    before_rows = poeng_df[poeng_df["tid"] < ts]
+
+    if after_rows.empty or before_rows.empty:
         return ""
 
-    before = poeng_df[poeng_df["tid"] <= ts - pd.Timedelta(vindu)].tail(1)
-    after = poeng_df[poeng_df["tid"] >= ts + pd.Timedelta(vindu)].head(1)
-
-    if before.empty or after.empty:
-        return ""
+    after_row  = after_rows.iloc[0]
+    before_row = before_rows.iloc[-1]
 
     diffs = {}
     for deltaker in deltaker_cols:
-        b = pd.to_numeric(before.iloc[0][deltaker], errors="coerce")
-        a = pd.to_numeric(after.iloc[0][deltaker], errors="coerce")
-        if pd.notna(b) and pd.notna(a):
-            diff = a - b
-            if diff != 0:
-                diffs.setdefault(int(diff), []).append(str(deltaker))
+        b = pd.to_numeric(before_row[deltaker], errors="coerce")
+        a = pd.to_numeric(after_row[deltaker], errors="coerce")
+        if pd.notna(b) and pd.notna(a) and a - b != 0:
+            diffs.setdefault(int(a - b), []).append(str(deltaker))
 
     parts = []
     for diff in sorted(diffs.keys(), reverse=True):
         sign = "+" if diff > 0 else ""
-        navn = ", ".join(sorted(diffs[diff]))
-        parts.append(f"{sign}{diff} {navn}")
+        parts.append(f"{sign}{diff} {', '.join(sorted(diffs[diff]))}")
 
     return "<br>".join(parts)
 
@@ -320,13 +317,10 @@ for deltaker in deltaker_cols:
 event_texts = []
 for ts in poeng_plot["tid"]:
     event_text = finn_nærmeste_hendelse(ts, hendelser_lookup_df, max_diff="45s")
-    match_row = finn_nærmeste_hendelse_rad(ts, hendelser_lookup_df, max_diff="45s")
-
-    if event_text and match_row is not None:
-        changes_text = poengendring_ved_hendelse(match_row["DatoTid"], poeng_plot, deltaker_cols)
+    if event_text:
+        changes_text = poengendring_ved_rad(ts, poeng_plot, deltaker_cols)
         if changes_text:
             event_text = f"{event_text}<br>{changes_text}"
-
     event_texts.append(event_text)
 
 hover_y = pd.to_numeric(poeng_plot[deltaker_cols[0]], errors="coerce")
