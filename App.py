@@ -436,60 +436,22 @@ main_col, side_col = st.columns([5.8, 1.8], gap="large")
 with main_col:
     st.plotly_chart(fig, use_container_width=True)
 
-    if hendelser_vis is None:
-        st.info(f"Fant ikke brukbare kolonner i arket 'Hendelser'. Tilgjengelige ark: {sheet_names}")
-    elif hendelser_vis.empty:
-        st.info("Ingen hendelser funnet i arket.")
-    else:
-        html_items = "".join(
-            f"""
-            <div style="
-                display:inline-block;
-                vertical-align:top;
-                min-width:180px;
-                max-width:250px;
-                margin-right:10px;
-                padding:8px 10px;
-                border:1px solid rgba(49,51,63,0.15);
-                border-radius:10px;
-                background:#fafafa;
-                font-size:0.90rem;
-            ">
-                <div style="font-weight:600; margin-bottom:3px;">{row.Tid}</div>
-                <div style="font-size:0.82rem; color:#666; margin-bottom:3px;">{row.Type}</div>
-                <div style="line-height:1.3;">{row.Hendelse}</div>
-            </div>
-            """
-            for _, row in hendelser_vis.iterrows()
-        )
-
-        st.markdown(
-            f"""
-            <div style="display:flex; flex-wrap:nowrap; overflow-x:auto; padding-bottom:6px;">
-                {html_items}
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
-with side_col:
-    st.markdown(ranking_html, unsafe_allow_html=True)
-
+    # Neste kamp-boks
+    neste_kamp_html = ""
     if neste_kamp_df is not None and not neste_kamp_df.empty:
         cols = neste_kamp_df.columns.tolist()
-        hjemmelag_col  = cols[1] if len(cols) > 1 else None
+        hjemmetla_col   = cols[1] if len(cols) > 1 else None
         hjemmeflagg_col = cols[2] if len(cols) > 2 else None
-        borteflagg_col = cols[3] if len(cols) > 3 else None
-        bortelag_col   = cols[4] if len(cols) > 4 else None
-        tidspunkt_col  = cols[5] if len(cols) > 5 else None
+        borteflagg_col  = cols[3] if len(cols) > 3 else None
+        bortetla_col    = cols[4] if len(cols) > 4 else None
+        tidspunkt_col   = cols[5] if len(cols) > 5 else None
 
-        kamp_items = ""
         for _, row in neste_kamp_df.iterrows():
-            hjemmelag  = row[hjemmelag_col]  if hjemmelag_col  else ""
+            hjemmetla   = row[hjemmetla_col]   if hjemmetla_col   else ""
             hjemmeflagg = row[hjemmeflagg_col] if hjemmeflagg_col else ""
-            borteflagg = row[borteflagg_col] if borteflagg_col else ""
-            bortelag   = row[bortelag_col]   if bortelag_col   else ""
-            tidspunkt  = row[tidspunkt_col]  if tidspunkt_col  else ""
+            borteflagg  = row[borteflagg_col]  if borteflagg_col  else ""
+            bortetla    = row[bortetla_col]     if bortetla_col    else ""
+            tidspunkt   = row[tidspunkt_col]    if tidspunkt_col   else ""
 
             if pd.notna(tidspunkt):
                 try:
@@ -497,25 +459,70 @@ with side_col:
                 except Exception:
                     tidspunkt = str(tidspunkt)
 
-            flagg_h = f'<img src="{hjemmeflagg}" style="height:20px;vertical-align:middle;margin-right:4px;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
-            flagg_b = f'<img src="{borteflagg}" style="height:20px;vertical-align:middle;margin-left:4px;">' if pd.notna(borteflagg) and borteflagg else ""
+            flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
+            flagg_b = f'<img src="{borteflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
 
-            kamp_items += f"""
+            neste_kamp_html += f"""
             <div style="
+                display:inline-block;
+                vertical-align:top;
+                min-width:160px;
                 padding:8px 10px;
-                margin-bottom:6px;
                 border:1px solid rgba(49,51,63,0.15);
                 border-radius:10px;
                 background:#f0f4ff;
-                font-size:0.88rem;
+                font-size:0.90rem;
+                white-space:nowrap;
             ">
                 <div style="font-size:0.78rem;color:#666;margin-bottom:4px;">Neste kamp</div>
-                <div style="font-weight:600;">{flagg_h}{hjemmelag} – {bortelag}{flagg_b}</div>
-                <div style="margin-top:3px;color:#444;">{tidspunkt}</div>
+                <div style="font-weight:600;">{hjemmetla} {flagg_h} – {flagg_b} {bortetla}</div>
+                <div style="margin-top:3px;color:#444;font-size:0.82rem;">{tidspunkt}</div>
             </div>
             """
 
-        st.markdown(kamp_items, unsafe_allow_html=True)
+    if hendelser_vis is None:
+        st.info(f"Fant ikke brukbare kolonner i arket 'Hendelser'. Tilgjengelige ark: {sheet_names}")
+    else:
+        hendelser_html = ""
+        if hendelser_vis is not None and not hendelser_vis.empty:
+            hendelser_html = "".join(
+                f"""
+                <div style="
+                    display:inline-block;
+                    vertical-align:top;
+                    min-width:180px;
+                    max-width:250px;
+                    margin-right:10px;
+                    padding:8px 10px;
+                    border:1px solid rgba(49,51,63,0.15);
+                    border-radius:10px;
+                    background:#fafafa;
+                    font-size:0.90rem;
+                ">
+                    <div style="font-weight:600; margin-bottom:3px;">{row.Tid}</div>
+                    <div style="font-size:0.82rem; color:#666; margin-bottom:3px;">{row.Type}</div>
+                    <div style="line-height:1.3;">{row.Hendelse}</div>
+                </div>
+                """
+                for _, row in hendelser_vis.iterrows()
+            )
+
+        st.markdown(
+            f"""
+            <div style="display:flex; flex-wrap:nowrap; align-items:flex-start; gap:10px; overflow-x:auto; padding-bottom:6px;">
+                <div style="display:flex; flex-wrap:nowrap; gap:10px; overflow-x:auto; flex:1; min-width:0;">
+                    {hendelser_html}
+                </div>
+                <div style="flex-shrink:0;">
+                    {neste_kamp_html}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+with side_col:
+    st.markdown(ranking_html, unsafe_allow_html=True)
 
     st.subheader("⚽ Toppscorere")
     st.dataframe(toppscorere_top3, use_container_width=True, hide_index=True)
