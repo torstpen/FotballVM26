@@ -196,13 +196,13 @@ ranking_html = f"""
 .ranking-table {{
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.88rem;
+    font-size: 0.80rem;
     table-layout: fixed;
 }}
 .ranking-table th,
 .ranking-table td {{
     white-space: nowrap;
-    padding: 0.28rem 0.35rem;
+    padding: 0.15rem 0.30rem;
     text-align: left;
     border-bottom: 1px solid rgba(49, 51, 63, 0.14);
     overflow: hidden;
@@ -609,5 +609,5 @@ with side_col:
     elif neste_kamp_html:
         st.markdown(neste_kamp_html, unsafe_allow_html=True)
 
-    st.subheader("⚽ Toppscorere")
-    st.dataframe(toppscorere_top3, use_container_width=True, hide_index=True)
+    st.markdown("<div style='font-size:0.82rem;font-weight:600;margin-top:4px;margin-bottom:2px;'>⚽ Toppscorere</div>", unsafe_allow_html=True)
+    st.dataframe(toppscorere_top3, use_container_width=True, hide_index=True, height=35 + 35 * len(toppscorere_top3))
