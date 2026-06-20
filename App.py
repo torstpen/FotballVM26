@@ -168,13 +168,22 @@ def trend_html(trend):
         return "<span style='color:#c33;'>▼</span>"
     return ""
 
+def parse_endring(val):
+    try:
+        return int(str(val).replace("+", ""))
+    except (ValueError, TypeError):
+        return None
+
+endrings_verdier = [parse_endring(r["24t"]) for _, r in ranking_df.iterrows()]
+max_endring = max((v for v in endrings_verdier if v is not None), default=None)
+
 rows_html = "\n".join(
     f"<tr>"
     f"<td>{row.Plass} {trend_html(row['Trend'])}</td>"
     f"<td>{row.Medalje}</td>"
     f"<td>{row.Deltaker}</td>"
     f"<td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td>"
-    f"<td style='color:{'#2a2' if str(row['24t']).startswith('+') else '#c33' if str(row['24t']).startswith('-') else '#888'};'>{row['24t']}</td>"
+    f"<td style='color:{'#2a2' if str(row['24t']).startswith('+') else '#c33' if str(row['24t']).startswith('-') else '#888'};{' font-weight:700;' if max_endring is not None and parse_endring(row['24t']) == max_endring and max_endring > 0 else ''}'>{row['24t']}</td>"
     f"</tr>"
     for _, row in ranking_df.iterrows()
 )
