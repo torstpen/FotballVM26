@@ -65,6 +65,12 @@ def load_data():
     else:
         neste_kamp_df = None
 
+    if "Aktiv kamp" in sheet_names:
+        aktiv_kamp_df = pd.read_excel(xls, sheet_name="Aktiv kamp", header=0)
+        aktiv_kamp_df = aktiv_kamp_df.dropna(how="all")
+    else:
+        aktiv_kamp_df = None
+
     poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
     poeng_df = poeng_df.dropna(axis=1, how="all")
 
@@ -75,10 +81,10 @@ def load_data():
         hendelser_df = hendelser_df.loc[:, ~hendelser_df.columns.astype(str).str.contains(r"^Unnamed")]
         hendelser_df = hendelser_df.dropna(axis=1, how="all")
 
-    return poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, sheet_names
+    return poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, sheet_names
 
 
-poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, sheet_names = load_data()
+poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, sheet_names = load_data()
 
 # -------------------------------------------------
 # KONVERTER TID
@@ -505,7 +511,38 @@ with main_col:
 with side_col:
     st.markdown(ranking_html, unsafe_allow_html=True)
 
-    if neste_kamp_html:
+    aktiv_kamp_html = ""
+    if aktiv_kamp_df is not None and not aktiv_kamp_df.empty:
+        cols = aktiv_kamp_df.columns.tolist()
+        kamp_linjer = ""
+        for _, row in aktiv_kamp_df.iterrows():
+            hjemmetla   = row[cols[1]] if len(cols) > 1 else ""
+            hjemmeflagg = row[cols[2]] if len(cols) > 2 else ""
+            hjemmemål   = row[cols[3]] if len(cols) > 3 else ""
+            bortemål    = row[cols[4]] if len(cols) > 4 else ""
+            borteflagg  = row[cols[5]] if len(cols) > 5 else ""
+            bortetla    = row[cols[6]] if len(cols) > 6 else ""
+            flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
+            flagg_b = f'<img src="{borteflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
+            hm = int(hjemmemål) if pd.notna(hjemmemål) else 0
+            bm = int(bortemål)  if pd.notna(bortemål)  else 0
+            kamp_linjer += (
+                f'<div style="display:flex;align-items:center;gap:4px;font-weight:600;">'
+                f'<span style="flex:1;text-align:right;">{hjemmetla} {flagg_h}</span>'
+                f'<span>{hm} – {bm}</span>'
+                f'<span style="flex:1;text-align:left;">{flagg_b} {bortetla}</span>'
+                f'</div>'
+            )
+        aktiv_kamp_html = (
+            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fff4e0;font-size:0.90rem;box-sizing:border-box;">'
+            f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">Aktiv kamp</div>'
+            f'{kamp_linjer}'
+            f'</div>'
+        )
+
+    if aktiv_kamp_html:
+        st.markdown(aktiv_kamp_html, unsafe_allow_html=True)
+    elif neste_kamp_html:
         st.markdown(neste_kamp_html, unsafe_allow_html=True)
 
     st.subheader("⚽ Toppscorere")
