@@ -446,29 +446,34 @@ with main_col:
         bortetla_col    = cols[4] if len(cols) > 4 else None
         tidspunkt_col   = cols[5] if len(cols) > 5 else None
 
+        tidspunkt_vis = ""
+        if tidspunkt_col:
+            første_tid = neste_kamp_df.iloc[0][tidspunkt_col]
+            if pd.notna(første_tid):
+                try:
+                    tidspunkt_vis = pd.to_datetime(første_tid, utc=True).tz_convert("Europe/Oslo").strftime("%d.%m %H:%M")
+                except Exception:
+                    tidspunkt_vis = str(første_tid)
+
+        kamp_linjer = ""
         for _, row in neste_kamp_df.iterrows():
             hjemmetla   = row[hjemmetla_col]   if hjemmetla_col   else ""
             hjemmeflagg = row[hjemmeflagg_col] if hjemmeflagg_col else ""
             borteflagg  = row[borteflagg_col]  if borteflagg_col  else ""
             bortetla    = row[bortetla_col]     if bortetla_col    else ""
-            tidspunkt   = row[tidspunkt_col]    if tidspunkt_col   else ""
-
-            if pd.notna(tidspunkt):
-                try:
-                    tidspunkt = pd.to_datetime(tidspunkt, utc=True).tz_convert("Europe/Oslo").strftime("%d.%m %H:%M")
-                except Exception:
-                    tidspunkt = str(tidspunkt)
 
             flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
             flagg_b = f'<img src="{borteflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
 
-            neste_kamp_html += (
-                f'<div style="display:inline-block;vertical-align:top;min-width:160px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#f0f4ff;font-size:0.90rem;white-space:nowrap;">'
-                f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">Neste kamp</div>'
-                f'<div style="font-weight:600;">{hjemmetla} {flagg_h} – {flagg_b} {bortetla}</div>'
-                f'<div style="margin-top:3px;color:#444;font-size:0.82rem;">{tidspunkt}</div>'
-                f'</div>'
-            )
+            kamp_linjer += f'<div style="font-weight:600;">{hjemmetla} {flagg_h} – {flagg_b} {bortetla}</div>'
+
+        neste_kamp_html = (
+            f'<div style="display:inline-block;vertical-align:top;min-width:160px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#f0f4ff;font-size:0.90rem;white-space:nowrap;">'
+            f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">Neste kamp</div>'
+            f'{kamp_linjer}'
+            f'<div style="margin-top:3px;color:#444;font-size:0.82rem;">{tidspunkt_vis}</div>'
+            f'</div>'
+        )
 
     if hendelser_vis is None:
         st.info(f"Fant ikke brukbare kolonner i arket 'Hendelser'. Tilgjengelige ark: {sheet_names}")
