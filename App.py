@@ -59,6 +59,12 @@ def load_data():
     else:
         hendelser_df = None
 
+    if "Neste kamp" in sheet_names:
+        neste_kamp_df = pd.read_excel(xls, sheet_name="Neste kamp", header=0)
+        neste_kamp_df = neste_kamp_df.dropna(how="all")
+    else:
+        neste_kamp_df = None
+
     poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
     poeng_df = poeng_df.dropna(axis=1, how="all")
 
@@ -69,10 +75,10 @@ def load_data():
         hendelser_df = hendelser_df.loc[:, ~hendelser_df.columns.astype(str).str.contains(r"^Unnamed")]
         hendelser_df = hendelser_df.dropna(axis=1, how="all")
 
-    return poeng_df, toppscorere_df, hendelser_df, sheet_names
+    return poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, sheet_names
 
 
-poeng_df, toppscorere_df, hendelser_df, sheet_names = load_data()
+poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, sheet_names = load_data()
 
 # -------------------------------------------------
 # KONVERTER TID
@@ -468,6 +474,48 @@ with main_col:
 
 with side_col:
     st.markdown(ranking_html, unsafe_allow_html=True)
+
+    if neste_kamp_df is not None and not neste_kamp_df.empty:
+        cols = neste_kamp_df.columns.tolist()
+        hjemmelag_col  = cols[1] if len(cols) > 1 else None
+        hjemmeflagg_col = cols[2] if len(cols) > 2 else None
+        borteflagg_col = cols[3] if len(cols) > 3 else None
+        bortelag_col   = cols[4] if len(cols) > 4 else None
+        tidspunkt_col  = cols[5] if len(cols) > 5 else None
+
+        kamp_items = ""
+        for _, row in neste_kamp_df.iterrows():
+            hjemmelag  = row[hjemmelag_col]  if hjemmelag_col  else ""
+            hjemmeflagg = row[hjemmeflagg_col] if hjemmeflagg_col else ""
+            borteflagg = row[borteflagg_col] if borteflagg_col else ""
+            bortelag   = row[bortelag_col]   if bortelag_col   else ""
+            tidspunkt  = row[tidspunkt_col]  if tidspunkt_col  else ""
+
+            if pd.notna(tidspunkt):
+                try:
+                    tidspunkt = pd.to_datetime(tidspunkt, utc=True).tz_convert("Europe/Oslo").strftime("%d.%m %H:%M")
+                except Exception:
+                    tidspunkt = str(tidspunkt)
+
+            flagg_h = f'<img src="{hjemmeflagg}" style="height:20px;vertical-align:middle;margin-right:4px;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
+            flagg_b = f'<img src="{borteflagg}" style="height:20px;vertical-align:middle;margin-left:4px;">' if pd.notna(borteflagg) and borteflagg else ""
+
+            kamp_items += f"""
+            <div style="
+                padding:8px 10px;
+                margin-bottom:6px;
+                border:1px solid rgba(49,51,63,0.15);
+                border-radius:10px;
+                background:#f0f4ff;
+                font-size:0.88rem;
+            ">
+                <div style="font-size:0.78rem;color:#666;margin-bottom:4px;">Neste kamp</div>
+                <div style="font-weight:600;">{flagg_h}{hjemmelag} – {bortelag}{flagg_b}</div>
+                <div style="margin-top:3px;color:#444;">{tidspunkt}</div>
+            </div>
+            """
+
+        st.markdown(kamp_items, unsafe_allow_html=True)
 
     st.subheader("⚽ Toppscorere")
     st.dataframe(toppscorere_top3, use_container_width=True, hide_index=True)
