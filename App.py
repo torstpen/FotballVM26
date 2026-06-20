@@ -123,6 +123,14 @@ cutoff_24h = now - pd.Timedelta(hours=24)
 row_24h = poeng_df[poeng_df["tid"] <= cutoff_24h].tail(1)
 if not row_24h.empty:
     row_24h = row_24h.iloc[0]
+    deltaker_cols_rank = [c for c in poeng_df.columns if c not in ["tid", "row_id"]]
+    rang_24h = (
+        pd.Series({d: pd.to_numeric(row_24h[d], errors="coerce") for d in deltaker_cols_rank})
+        .dropna()
+        .rank(method="min", ascending=False)
+        .astype(int)
+    )
+
     def endring_24h(deltaker):
         n = pd.to_numeric(latest[deltaker], errors="coerce")
         g = pd.to_numeric(row_24h[deltaker], errors="coerce")
@@ -133,14 +141,42 @@ if not row_24h.empty:
             elif diff < 0:
                 return str(diff)
         return ""
+
+    def rangendring_24h(deltaker, nå_plass):
+        if deltaker not in rang_24h.index:
+            return ""
+        gammel_plass = rang_24h[deltaker]
+        diff = int(nå_plass) - gammel_plass
+        if diff < 0:
+            return "▲"
+        elif diff > 0:
+            return "▼"
+        return ""
+
     ranking_df["24t"] = ranking_df["Deltaker"].map(endring_24h)
+    ranking_df["Trend"] = ranking_df.apply(lambda r: rangendring_24h(r["Deltaker"], r["Plass"]), axis=1)
 else:
     ranking_df["24t"] = ""
+    ranking_df["Trend"] = ""
 
-ranking_df = ranking_df[["Plass", "Medalje", "Deltaker", "Poeng", "24t"]].head(12)
+ranking_df = ranking_df[["Plass", "Medalje", "Deltaker", "Poeng", "24t", "Trend"]].head(12)
+
+def trend_html(trend):
+    if trend == "▲":
+        return "<span style='color:#2a2;'>▲</span>"
+    elif trend == "▼":
+        return "<span style='color:#c33;'>▼</span>"
+    return ""
 
 rows_html = "\n".join(
-    f"<tr><td>{row.Plass}</td><td>{row.Medalje}</td><td>{row.Deltaker}</td><td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td><td style='color:{'#2a2' if str(row['24t']).startswith('+') else '#c33' if str(row['24t']).startswith('-') else '#888'};'>{row['24t']}</td></tr>"
+    f"<tr>"
+    f"<td>{row.Plass}</td>"
+    f"<td>{row.Medalje}</td>"
+    f"<td>{row.Deltaker}</td>"
+    f"<td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td>"
+    f"<td style='color:{'#2a2' if str(row['24t']).startswith('+') else '#c33' if str(row['24t']).startswith('-') else '#888'};'>{row['24t']}</td>"
+    f"<td>{trend_html(row['Trend'])}</td>"
+    f"</tr>"
     for _, row in ranking_df.iterrows()
 )
 
@@ -179,9 +215,10 @@ ranking_html = f"""
         <tr>
             <th style="width:12%;">Plass</th>
             <th style="width:10%;"></th>
-            <th style="width:44%;">Deltaker</th>
+            <th style="width:38%;">Deltaker</th>
             <th style="width:16%;">Poeng</th>
-            <th style="width:18%;">24t</th>
+            <th style="width:16%;">24t</th>
+            <th style="width:8%;"></th>
         </tr>
     </thead>
     <tbody>
