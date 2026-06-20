@@ -474,7 +474,7 @@ with main_col:
             )
 
         neste_kamp_html = (
-            f'<div style="display:inline-block;vertical-align:top;min-width:180px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#f0f4ff;font-size:0.90rem;">'
+            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#f0f4ff;font-size:0.90rem;box-sizing:border-box;">'
             f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">Neste kamp</div>'
             f'{kamp_linjer}'
             f'<div style="margin-top:3px;color:#444;font-size:0.82rem;">{tidspunkt_vis}</div>'
