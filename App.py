@@ -495,20 +495,18 @@ with main_col:
                 for _, row in hendelser_vis.iterrows()
             )
 
-        html = (
-            '<div style="display:flex;flex-wrap:nowrap;align-items:flex-start;gap:10px;overflow-x:auto;padding-bottom:6px;">'
-            '<div style="display:flex;flex-wrap:nowrap;gap:10px;overflow-x:auto;flex:1;min-width:0;">'
+        st.markdown(
+            '<div style="display:flex;flex-wrap:nowrap;gap:10px;overflow-x:auto;padding-bottom:6px;">'
             + hendelser_html +
-            '</div>'
-            '<div style="flex-shrink:0;">'
-            + neste_kamp_html +
-            '</div>'
-            '</div>'
+            '</div>',
+            unsafe_allow_html=True
         )
-        st.markdown(html, unsafe_allow_html=True)
 
 with side_col:
     st.markdown(ranking_html, unsafe_allow_html=True)
+
+    if neste_kamp_html:
+        st.markdown(neste_kamp_html, unsafe_allow_html=True)
 
     st.subheader("⚽ Toppscorere")
     st.dataframe(toppscorere_top3, use_container_width=True, hide_index=True)
