@@ -313,8 +313,11 @@ if hendelser_df is not None:
         # BEHOLD DatoTid for hover-match
         hendelser_vis = hendelser_vis[["DatoTid", "Tid", "Type", "Hendelse"]]
 
-        hendelser_lookup_df = hendelser_df[[tid_col, tekst_col]].copy()
-        hendelser_lookup_df.columns = ["DatoTid", "Hendelse"]
+        lookup_cols = [tid_col, tekst_col] + ([type_col] if type_col else [])
+        hendelser_lookup_df = hendelser_df[lookup_cols].copy()
+        hendelser_lookup_df.columns = ["DatoTid", "Hendelse"] + (["Type"] if type_col else [])
+        if "Type" not in hendelser_lookup_df.columns:
+            hendelser_lookup_df["Type"] = ""
         hendelser_lookup_df["DatoTid"] = excel_tid_til_datetime(hendelser_lookup_df["DatoTid"])
         hendelser_lookup_df = hendelser_lookup_df.dropna(subset=["DatoTid", "Hendelse"]).sort_values("DatoTid").reset_index(drop=True)
 
@@ -328,7 +331,12 @@ def finn_nærmeste_hendelse(ts, events_df, max_diff="45s"):
     diffs = (events_df["DatoTid"] - ts).abs()
     idx = diffs.idxmin()
     if diffs.loc[idx] <= pd.Timedelta(max_diff):
-        return str(events_df.loc[idx, "Hendelse"])
+        row = events_df.loc[idx]
+        type_str = str(row.get("Type", "")) if "Type" in events_df.columns else ""
+        hendelse_str = str(row["Hendelse"])
+        if type_str and type_str != "nan":
+            return f"{type_str}<br>{hendelse_str}"
+        return hendelse_str
     return ""
 
 def finn_nærmeste_hendelse_rad(ts, events_df, max_diff="45s"):
