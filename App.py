@@ -465,10 +465,16 @@ with main_col:
             flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
             flagg_b = f'<img src="{borteflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
 
-            kamp_linjer += f'<div style="font-weight:600;">{hjemmetla} {flagg_h} – {flagg_b} {bortetla}</div>'
+            kamp_linjer += (
+                f'<div style="display:flex;align-items:center;gap:4px;font-weight:600;">'
+                f'<span style="flex:1;text-align:right;">{hjemmetla} {flagg_h}</span>'
+                f'<span>–</span>'
+                f'<span style="flex:1;text-align:left;">{flagg_b} {bortetla}</span>'
+                f'</div>'
+            )
 
         neste_kamp_html = (
-            f'<div style="display:inline-block;vertical-align:top;min-width:160px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#f0f4ff;font-size:0.90rem;white-space:nowrap;">'
+            f'<div style="display:inline-block;vertical-align:top;min-width:180px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#f0f4ff;font-size:0.90rem;">'
             f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">Neste kamp</div>'
             f'{kamp_linjer}'
             f'<div style="margin-top:3px;color:#444;font-size:0.82rem;">{tidspunkt_vis}</div>'
