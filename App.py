@@ -170,12 +170,11 @@ def trend_html(trend):
 
 rows_html = "\n".join(
     f"<tr>"
-    f"<td>{row.Plass}</td>"
+    f"<td>{row.Plass} {trend_html(row['Trend'])}</td>"
     f"<td>{row.Medalje}</td>"
     f"<td>{row.Deltaker}</td>"
     f"<td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td>"
     f"<td style='color:{'#2a2' if str(row['24t']).startswith('+') else '#c33' if str(row['24t']).startswith('-') else '#888'};'>{row['24t']}</td>"
-    f"<td>{trend_html(row['Trend'])}</td>"
     f"</tr>"
     for _, row in ranking_df.iterrows()
 )
@@ -213,12 +212,11 @@ ranking_html = f"""
 <table class="ranking-table">
     <thead>
         <tr>
-            <th style="width:12%;">Plass</th>
+            <th style="width:20%;">Plass</th>
             <th style="width:10%;"></th>
-            <th style="width:38%;">Deltaker</th>
-            <th style="width:16%;">Poeng</th>
-            <th style="width:16%;">24t</th>
-            <th style="width:8%;"></th>
+            <th style="width:42%;">Deltaker</th>
+            <th style="width:14%;">Poeng</th>
+            <th style="width:14%;">24t</th>
         </tr>
     </thead>
     <tbody>
