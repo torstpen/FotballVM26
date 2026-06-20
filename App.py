@@ -118,10 +118,29 @@ ranking_df = ranking_df.sort_values(["Poeng", "Deltaker"], ascending=[False, Tru
 ranking_df["Plass"] = ranking_df["Poeng"].rank(method="min", ascending=False).astype("Int64")
 medals = {1: "🥇", 2: "🥈", 3: "🥉"}
 ranking_df["Medalje"] = ranking_df["Plass"].map(medals).fillna("")
-ranking_df = ranking_df[["Plass", "Medalje", "Deltaker", "Poeng"]].head(12)
+
+cutoff_24h = now - pd.Timedelta(hours=24)
+row_24h = poeng_df[poeng_df["tid"] <= cutoff_24h].tail(1)
+if not row_24h.empty:
+    row_24h = row_24h.iloc[0]
+    def endring_24h(deltaker):
+        n = pd.to_numeric(latest[deltaker], errors="coerce")
+        g = pd.to_numeric(row_24h[deltaker], errors="coerce")
+        if pd.notna(n) and pd.notna(g):
+            diff = int(n - g)
+            if diff > 0:
+                return f"+{diff}"
+            elif diff < 0:
+                return str(diff)
+        return ""
+    ranking_df["24t"] = ranking_df["Deltaker"].map(endring_24h)
+else:
+    ranking_df["24t"] = ""
+
+ranking_df = ranking_df[["Plass", "Medalje", "Deltaker", "Poeng", "24t"]].head(12)
 
 rows_html = "\n".join(
-    f"<tr><td>{row.Plass}</td><td>{row.Medalje}</td><td>{row.Deltaker}</td><td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td></tr>"
+    f"<tr><td>{row.Plass}</td><td>{row.Medalje}</td><td>{row.Deltaker}</td><td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td><td style='color:{'#2a2' if str(row['24t']).startswith('+') else '#c33' if str(row['24t']).startswith('-') else '#888'};'>{row['24t']}</td></tr>"
     for _, row in ranking_df.iterrows()
 )
 
@@ -158,10 +177,11 @@ ranking_html = f"""
 <table class="ranking-table">
     <thead>
         <tr>
-            <th style="width:14%;">Plass</th>
-            <th style="width:12%;"></th>
-            <th style="width:52%;">Deltaker</th>
-            <th style="width:22%;">Poeng</th>
+            <th style="width:12%;">Plass</th>
+            <th style="width:10%;"></th>
+            <th style="width:44%;">Deltaker</th>
+            <th style="width:16%;">Poeng</th>
+            <th style="width:18%;">24t</th>
         </tr>
     </thead>
     <tbody>
