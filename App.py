@@ -54,8 +54,20 @@ def load_data():
     poeng_df = pd.read_excel(xls, sheet_name="Poeng")
     toppscorere_df = pd.read_excel(xls, sheet_name="Toppscorere")
 
-    if "Hendelser" in sheet_names:
-        hendelser_df = pd.read_excel(xls, sheet_name="Hendelser")
+    # Les hendelser fra Poeng-arket (kolonnene Hendelse, Type og tid)
+    poeng_raw = pd.read_excel(xls, sheet_name="Poeng")
+    poeng_raw = poeng_raw.loc[:, ~poeng_raw.columns.astype(str).str.contains(r"^Unnamed")]
+    pcols = [c.strip() for c in poeng_raw.columns.astype(str)]
+    poeng_raw.columns = pcols
+    h_cols = [c for c in pcols if c.lower() == "hendelse"]
+    t_cols = [c for c in pcols if c.lower() == "type"]
+    if h_cols:
+        rows = poeng_raw[poeng_raw[h_cols[0]].notna()].copy()
+        keep = {"tid": pcols[0], "Hendelse": h_cols[0]}
+        if t_cols:
+            keep["Type"] = t_cols[0]
+        hendelser_df = rows[[keep["tid"], keep["Hendelse"]] + ([keep["Type"]] if "Type" in keep else [])].copy()
+        hendelser_df.columns = ["tid", "Hendelse"] + (["Type"] if "Type" in keep else [])
     else:
         hendelser_df = None
 
