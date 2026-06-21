@@ -107,6 +107,10 @@ if poeng_df["tid"].dt.tz is None:
 else:
     poeng_df["tid"] = poeng_df["tid"].dt.tz_convert("Europe/Oslo")
 poeng_df = poeng_df.dropna(subset=["tid"]).copy()
+
+NON_DELTAKER_COLS = {"tid", "row_id", "Hendelse", "hendelse", "Type", "type", "matchid", "Matchid", "MatchId"}
+DELTAKER_COLS = [c for c in poeng_df.columns if c not in NON_DELTAKER_COLS and c != "tid"][:12]
+poeng_df = poeng_df[["tid"] + DELTAKER_COLS].copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
 # -------------------------------------------------
@@ -135,7 +139,7 @@ cutoff_24h = now - pd.Timedelta(hours=24)
 row_24h = poeng_df[poeng_df["tid"] <= cutoff_24h].tail(1)
 if not row_24h.empty:
     row_24h = row_24h.iloc[0]
-    deltaker_cols_rank = [c for c in poeng_df.columns if c not in ["tid", "row_id"]]
+    deltaker_cols_rank = DELTAKER_COLS
     rang_24h = (
         pd.Series({d: pd.to_numeric(row_24h[d], errors="coerce") for d in deltaker_cols_rank})
         .dropna()
@@ -393,7 +397,7 @@ poeng_plot = poeng_df.copy()
 poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
 poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 
-deltaker_cols = [c for c in poeng_plot.columns if c not in ["tid", "row_id"]]
+deltaker_cols = DELTAKER_COLS
 
 fig = go.Figure()
 
