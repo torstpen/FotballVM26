@@ -89,11 +89,16 @@ poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, sheet_name
 # -------------------------------------------------
 # KONVERTER TID
 # -------------------------------------------------
-poeng_df["tid"] = pd.to_datetime(
-    poeng_df["tid"].astype(float),
-    unit="D",
-    origin="1899-12-30"
-).dt.tz_localize("Europe/Oslo")
+def _parse_tid(series):
+    first_valid = series.dropna().iloc[0] if not series.dropna().empty else None
+    if isinstance(first_valid, (int, float)):
+        return pd.to_datetime(series.astype(float), unit="D", origin="1899-12-30").dt.tz_localize("Europe/Oslo")
+    converted = pd.to_datetime(series, dayfirst=True, errors="coerce")
+    if converted.dt.tz is None:
+        converted = converted.dt.tz_localize("Europe/Oslo")
+    return converted
+
+poeng_df["tid"] = _parse_tid(poeng_df["tid"])
 poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
