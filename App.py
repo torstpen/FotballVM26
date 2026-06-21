@@ -89,16 +89,23 @@ poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, sheet_name
 # -------------------------------------------------
 # KONVERTER TID
 # -------------------------------------------------
-def _parse_tid(series):
-    first_valid = series.dropna().iloc[0] if not series.dropna().empty else None
-    if isinstance(first_valid, (int, float)):
-        return pd.to_datetime(series.astype(float), unit="D", origin="1899-12-30").dt.tz_localize("Europe/Oslo")
-    converted = pd.to_datetime(series, dayfirst=True, errors="coerce")
-    if converted.dt.tz is None:
-        converted = converted.dt.tz_localize("Europe/Oslo")
-    return converted
+def _parse_tid_value(v):
+    if v is None or (isinstance(v, float) and pd.isna(v)):
+        return pd.NaT
+    if isinstance(v, (int, float)):
+        return pd.Timestamp("1899-12-30") + pd.Timedelta(days=float(v))
+    if hasattr(v, "year"):  # datetime object
+        return pd.Timestamp(v)
+    try:
+        return pd.to_datetime(str(v), dayfirst=True)
+    except Exception:
+        return pd.NaT
 
-poeng_df["tid"] = _parse_tid(poeng_df["tid"])
+poeng_df["tid"] = pd.to_datetime([_parse_tid_value(v) for v in poeng_df["tid"]], utc=False)
+if poeng_df["tid"].dt.tz is None:
+    poeng_df["tid"] = poeng_df["tid"].dt.tz_localize("Europe/Oslo")
+else:
+    poeng_df["tid"] = poeng_df["tid"].dt.tz_convert("Europe/Oslo")
 poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
