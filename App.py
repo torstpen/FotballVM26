@@ -503,10 +503,10 @@ if len(y_values) > 0:
     y_max = float(y_values.max())
 
     # NED: ned til nærmeste 5 under minimum
-    y_lower = int(y_min // 5) * 5
+    y_lower = int((y_min-1) // 5) * 5
 
     # OPP: opp til nærmeste 5 over maksimum
-    y_upper = int((-(-y_max // 5))) * 5  # ceil til nærmeste 5
+    y_upper = int((-(-(y_max+1) // 5))) * 5  # ceil til nærmeste 5
 
     if y_lower == y_upper:
         y_lower -= 5
