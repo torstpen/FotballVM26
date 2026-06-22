@@ -659,9 +659,10 @@ with side_col:
                 except Exception:
                     pass
 
-            tooltip = f"{hjemmetla} {hm} – {bm} {bortetla} · {status_label}"
+            tooltip_raw = f"{hjemmetla} {hm} – {bm} {bortetla} · {status_label}"
             if tips_linjer:
-                tooltip += "\n\nTips:\n" + tips_linjer
+                tooltip_raw += "\n\nTips:\n" + tips_linjer
+            tooltip = tooltip_raw.replace("&", "&amp;").replace('"', "&quot;").replace("\n", "&#10;")
             kamp_linjer += (
                 f'<div title="{tooltip}" style="display:flex;align-items:center;gap:4px;font-weight:600;cursor:default;">'
                 f'<span style="flex:1;text-align:right;">{hjemmetla} {flagg_h}</span>'
