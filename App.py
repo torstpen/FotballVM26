@@ -597,13 +597,9 @@ with main_col:
                     pass
 
             kamp_linjer += (
-                f'<div class="neste-kamp-rad">'
-                f'<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">'
-                f'<span style="flex:1;text-align:right;font-weight:600;">{hjemmetla} {flagg_h}</span>'
-                f'<span style="font-weight:600;">–</span>'
-                f'<span style="flex:1;text-align:left;font-weight:600;">{flagg_b} {bortetla}</span>'
-                f'<span style="color:#444;font-size:0.82rem;white-space:nowrap;margin-left:6px;">{tidspunkt_vis}</span>'
-                f'</div>'
+                f'<div class="neste-kamp-rad" style="white-space:nowrap;margin-bottom:2px;">'
+                f'<span style="font-weight:600;">{hjemmetla} {flagg_h} – {flagg_b} {bortetla}</span>'
+                f'<span style="color:#444;font-size:0.82rem;margin-left:8px;">{tidspunkt_vis}</span>'
                 f'{tips_html}'
                 f'</div>'
             )
