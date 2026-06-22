@@ -558,7 +558,7 @@ with main_col:
         bortetla_col    = cols[4] if len(cols) > 4 else None
         tidspunkt_col   = cols[5] if len(cols) > 5 else None
 
-        kamp_kolonner = ""
+        kamp_linjer = ""
         for _, row in neste_kamp_df.iterrows():
             hjemmetla   = row[hjemmetla_col]   if hjemmetla_col   else ""
             hjemmeflagg = row[hjemmeflagg_col] if hjemmeflagg_col else ""
@@ -575,8 +575,8 @@ with main_col:
             else:
                 tidspunkt_vis = ""
 
-            flagg_h = f'<img src="{hjemmeflagg}" style="height:16px;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
-            flagg_b = f'<img src="{borteflagg}" style="height:16px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
+            flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
+            flagg_b = f'<img src="{borteflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
 
             tips_html = ""
             if kamptips_df is not None and pd.notna(match_id):
@@ -596,18 +596,22 @@ with main_col:
                 except Exception:
                     pass
 
-            kamp_kolonner += (
+            kamp_linjer += (
                 f'<div class="neste-kamp-rad">'
-                f'<div style="font-weight:600;font-size:0.85rem;">{hjemmetla} {flagg_h} – {flagg_b} {bortetla}</div>'
-                f'<div style="font-size:0.75rem;color:#555;margin-top:1px;">{tidspunkt_vis}</div>'
+                f'<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">'
+                f'<span style="flex:1;text-align:right;font-weight:600;">{hjemmetla} {flagg_h}</span>'
+                f'<span style="font-weight:600;">–</span>'
+                f'<span style="flex:1;text-align:left;font-weight:600;">{flagg_b} {bortetla}</span>'
+                f'<span style="color:#444;font-size:0.82rem;white-space:nowrap;margin-left:6px;">{tidspunkt_vis}</span>'
+                f'</div>'
                 f'{tips_html}'
                 f'</div>'
             )
 
         neste_kamp_html = (
             f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#f0f4ff;font-size:0.90rem;box-sizing:border-box;">'
-            f'<div style="font-size:0.78rem;color:#666;margin-bottom:6px;">{"Neste kamper" if len(neste_kamp_df) > 1 else "Neste kamp"}</div>'
-            f'<div style="display:flex;gap:8px;flex-wrap:wrap;">{kamp_kolonner}</div>'
+            f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">{"Neste kamper" if len(neste_kamp_df) > 1 else "Neste kamp"}</div>'
+            f'{kamp_linjer}'
             f'</div>'
         )
 
