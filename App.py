@@ -617,6 +617,12 @@ with main_col:
 with side_col:
     st.markdown(ranking_html, unsafe_allow_html=True)
 
+    st.markdown("""<style>
+.aktiv-kamp-rad{position:relative;}
+.aktiv-tip{display:none;position:absolute;right:0;top:110%;background:#222;color:#fff;padding:6px 10px;border-radius:6px;font-size:0.78rem;font-weight:400;white-space:nowrap;text-align:right;z-index:9999;min-width:160px;}
+.aktiv-kamp-rad:hover .aktiv-tip{display:block;}
+</style>""", unsafe_allow_html=True)
+
     aktiv_kamp_html = ""
     if aktiv_kamp_df is not None and not aktiv_kamp_df.empty:
         cols = aktiv_kamp_df.columns.tolist()
@@ -659,15 +665,23 @@ with side_col:
                 except Exception:
                     pass
 
-            tooltip_raw = f"{hjemmetla} {hm} – {bm} {bortetla} · {status_label}"
+            header_line = f"{hjemmetla} {hm} – {bm} {bortetla} · {status_label}"
+            tip_html = ""
             if tips_linjer:
-                tooltip_raw += "\n\nTips:\n" + tips_linjer
-            tooltip = tooltip_raw.replace("&", "&amp;").replace('"', "&quot;").replace("\n", "&#10;")
+                tip_rows = "".join(
+                    f'<div>{line}</div>'
+                    for line in (header_line + "\n\nTips:\n" + tips_linjer).split("\n")
+                )
+                tip_html = f'<div class="aktiv-tip">{tip_rows}</div>'
+
             kamp_linjer += (
-                f'<div title="{tooltip}" style="display:flex;align-items:center;gap:4px;font-weight:600;cursor:default;">'
+                f'<div class="aktiv-kamp-rad">'
+                f'<div style="display:flex;align-items:center;gap:4px;font-weight:600;cursor:default;">'
                 f'<span style="flex:1;text-align:right;">{hjemmetla} {flagg_h}</span>'
                 f'<span>{hm} – {bm}</span>'
                 f'<span style="flex:1;text-align:left;">{flagg_b} {bortetla}</span>'
+                f'</div>'
+                f'{tip_html}'
                 f'</div>'
             )
         aktiv_kamp_html = (
