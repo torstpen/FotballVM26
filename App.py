@@ -626,8 +626,17 @@ with side_col:
             flagg_b = f'<img src="{borteflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
             hm = int(hjemmemål) if pd.notna(hjemmemål) else 0
             bm = int(bortemål)  if pd.notna(bortemål)  else 0
+            status_val = row[cols[7]] if len(cols) > 7 else ""
+            status_str = str(status_val).strip() if pd.notna(status_val) else ""
+            if status_str == "IN_PLAY":
+                status_label = "Pågår"
+            elif status_str == "PAUSED":
+                status_label = "Pause"
+            else:
+                status_label = status_str
+            tooltip = f"{hjemmetla} {hm} – {bm} {bortetla} · {status_label}"
             kamp_linjer += (
-                f'<div style="display:flex;align-items:center;gap:4px;font-weight:600;">'
+                f'<div title="{tooltip}" style="display:flex;align-items:center;gap:4px;font-weight:600;cursor:default;">'
                 f'<span style="flex:1;text-align:right;">{hjemmetla} {flagg_h}</span>'
                 f'<span>{hm} – {bm}</span>'
                 f'<span style="flex:1;text-align:left;">{flagg_b} {bortetla}</span>'
