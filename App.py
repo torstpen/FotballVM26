@@ -83,6 +83,12 @@ def load_data():
     else:
         aktiv_kamp_df = None
 
+    if "Kamptips" in sheet_names:
+        kamptips_df = pd.read_excel(xls, sheet_name="Kamptips", header=0)
+        kamptips_df = kamptips_df.dropna(how="all")
+    else:
+        kamptips_df = None
+
     poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
     poeng_df = poeng_df.dropna(axis=1, how="all")
 
@@ -93,10 +99,10 @@ def load_data():
         hendelser_df = hendelser_df.loc[:, ~hendelser_df.columns.astype(str).str.contains(r"^Unnamed")]
         hendelser_df = hendelser_df.dropna(axis=1, how="all")
 
-    return poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, sheet_names
+    return poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, kamptips_df, sheet_names
 
 
-poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, sheet_names = load_data()
+poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, kamptips_df, sheet_names = load_data()
 
 # -------------------------------------------------
 # KONVERTER TID
@@ -634,7 +640,22 @@ with side_col:
                 status_label = "Pause"
             else:
                 status_label = status_str
+
+            match_id = row[cols[0]] if cols else None
+            tips_linjer = ""
+            if kamptips_df is not None and match_id is not None:
+                tips_row = kamptips_df[kamptips_df.iloc[:, 0].astype(str) == str(int(float(str(match_id))))]
+                if not tips_row.empty:
+                    tip_cols = kamptips_df.columns[1:]
+                    tips_linjer = "\n".join(
+                        f"{col}: {tips_row.iloc[0][col]}"
+                        for col in tip_cols
+                        if pd.notna(tips_row.iloc[0][col]) and str(tips_row.iloc[0][col]).strip()
+                    )
+
             tooltip = f"{hjemmetla} {hm} – {bm} {bortetla} · {status_label}"
+            if tips_linjer:
+                tooltip += "\n\nTips:\n" + tips_linjer
             kamp_linjer += (
                 f'<div title="{tooltip}" style="display:flex;align-items:center;gap:4px;font-weight:600;cursor:default;">'
                 f'<span style="flex:1;text-align:right;">{hjemmetla} {flagg_h}</span>'
