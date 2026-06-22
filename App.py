@@ -644,14 +644,20 @@ with side_col:
             match_id = row[cols[0]] if cols else None
             tips_linjer = ""
             if kamptips_df is not None and match_id is not None:
-                tips_row = kamptips_df[kamptips_df.iloc[:, 0].astype(str) == str(int(float(str(match_id))))]
-                if not tips_row.empty:
-                    tip_cols = kamptips_df.columns[1:]
-                    tips_linjer = "\n".join(
-                        f"{col}: {tips_row.iloc[0][col]}"
-                        for col in tip_cols
-                        if pd.notna(tips_row.iloc[0][col]) and str(tips_row.iloc[0][col]).strip()
-                    )
+                try:
+                    mid_int = int(float(str(match_id)))
+                    kt = kamptips_df.copy()
+                    kt["_mid"] = pd.to_numeric(kt.iloc[:, 0], errors="coerce").astype("Int64")
+                    tips_row = kt[kt["_mid"] == mid_int]
+                    if not tips_row.empty:
+                        tip_cols = kamptips_df.columns[1:]
+                        tips_linjer = "\n".join(
+                            f"{col}: {tips_row.iloc[0][col]}"
+                            for col in tip_cols
+                            if pd.notna(tips_row.iloc[0][col]) and str(tips_row.iloc[0][col]).strip()
+                        )
+                except Exception:
+                    pass
 
             tooltip = f"{hjemmetla} {hm} – {bm} {bortetla} · {status_label}"
             if tips_linjer:
