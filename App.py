@@ -621,6 +621,8 @@ with side_col:
 .aktiv-kamp-rad{position:relative;}
 .aktiv-tip{display:none;position:absolute;right:0;top:110%;background:#222;color:#fff;padding:6px 10px;border-radius:6px;font-size:0.78rem;font-weight:400;white-space:nowrap;text-align:right;z-index:9999;min-width:160px;}
 .aktiv-kamp-rad:hover .aktiv-tip{display:block;}
+@keyframes rec-blink{0%,100%{opacity:1;}50%{opacity:0.15;}}
+.rec-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e00;margin-right:5px;vertical-align:middle;animation:rec-blink 1.2s ease-in-out infinite;}
 </style>""", unsafe_allow_html=True)
 
     aktiv_kamp_html = ""
@@ -686,7 +688,7 @@ with side_col:
             )
         aktiv_kamp_html = (
             f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fff4e0;font-size:0.90rem;box-sizing:border-box;">'
-            f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">Aktiv kamp</div>'
+            f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;"><span class="rec-dot"></span>Aktiv kamp</div>'
             f'{kamp_linjer}'
             f'</div>'
         )
