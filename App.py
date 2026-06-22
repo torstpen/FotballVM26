@@ -565,7 +565,6 @@ with main_col:
             borteflagg  = row[borteflagg_col]  if borteflagg_col  else ""
             bortetla    = row[bortetla_col]     if bortetla_col    else ""
             tidspunkt   = row[tidspunkt_col]    if tidspunkt_col   else ""
-            match_id    = row[cols[0]]
 
             if pd.notna(tidspunkt):
                 try:
@@ -578,32 +577,12 @@ with main_col:
             flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
             flagg_b = f'<img src="{borteflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
 
-            tips_html = ""
-            if kamptips_df is not None and pd.notna(match_id):
-                try:
-                    mid_int = int(float(str(match_id)))
-                    kt = kamptips_df.copy()
-                    kt["_mid"] = pd.to_numeric(kt.iloc[:, 0], errors="coerce").astype("Int64")
-                    tips_row = kt[kt["_mid"] == mid_int]
-                    if not tips_row.empty:
-                        tip_cols = kamptips_df.columns[1:]
-                        tip_lines = "".join(
-                            f'<div>{col}: {tips_row.iloc[0][col]}</div>'
-                            for col in tip_cols
-                            if pd.notna(tips_row.iloc[0][col]) and str(tips_row.iloc[0][col]).strip()
-                        )
-                        tips_html = f'<div class="neste-tip">{tip_lines}</div>'
-                except Exception:
-                    pass
-
             kamp_linjer += (
-                f'<div class="neste-kamp-rad" style="margin-bottom:4px;">'
-                f'<div style="display:flex;align-items:center;gap:4px;font-weight:600;">'
-                f'<span style="flex:1;text-align:right;">{hjemmetla} {flagg_h}</span>'
-                f'<span style="color:#444;font-size:0.82rem;white-space:nowrap;">{tidspunkt_vis}</span>'
-                f'<span style="flex:1;text-align:left;">{flagg_b} {bortetla}</span>'
-                f'</div>'
-                f'{tips_html}'
+                f'<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">'
+                f'<span style="flex:1;text-align:right;font-weight:600;">{hjemmetla} {flagg_h}</span>'
+                f'<span style="font-weight:600;">–</span>'
+                f'<span style="flex:1;text-align:left;font-weight:600;">{flagg_b} {bortetla}</span>'
+                f'<span style="color:#444;font-size:0.82rem;white-space:nowrap;margin-left:6px;">{tidspunkt_vis}</span>'
                 f'</div>'
             )
 
