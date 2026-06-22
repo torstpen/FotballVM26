@@ -574,8 +574,8 @@ with main_col:
             else:
                 tidspunkt_vis = ""
 
-            flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
-            flagg_b = f'<img src="{borteflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
+            flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;width:auto;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
+            flagg_b = f'<img src="{borteflagg}" style="height:18px;width:auto;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
 
             kamp_linjer += (
                 f'<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">'
@@ -639,8 +639,8 @@ with side_col:
             bortemål    = row[cols[4]] if len(cols) > 4 else ""
             borteflagg  = row[cols[5]] if len(cols) > 5 else ""
             bortetla    = row[cols[6]] if len(cols) > 6 else ""
-            flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
-            flagg_b = f'<img src="{borteflagg}" style="height:18px;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
+            flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;width:auto;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
+            flagg_b = f'<img src="{borteflagg}" style="height:18px;width:auto;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
             hm = int(hjemmemål) if pd.notna(hjemmemål) else 0
             bm = int(bortemål)  if pd.notna(bortemål)  else 0
             status_val = row[cols[7]] if len(cols) > 7 else ""
