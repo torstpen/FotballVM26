@@ -89,8 +89,20 @@ def load_data():
     else:
         kamptips_df = None
 
+    if "HonorBox" in sheet_names:
+        honorbox_df = pd.read_excel(xls, sheet_name="HonorBox", header=0)
+        honorbox_df = honorbox_df.dropna(how="all")
+        honorbox_df["Deltaker"] = honorbox_df["Deltaker"].astype(str).str.strip()
+        honorbox_df["HonorBox"] = pd.to_numeric(honorbox_df["HonorBox"], errors="coerce").fillna(0).astype(int)
+    else:
+        honorbox_df = pd.DataFrame(columns=["Deltaker", "HonorBox"])
+
     poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
     poeng_df = poeng_df.dropna(axis=1, how="all")
+
+    # Les HB_*-kolonner fra Poeng-arket for historisk Honor Box
+    hb_cols = [c for c in poeng_df.columns if str(c).startswith("HB_")]
+    hb_historikk_df = poeng_df[["tid"] + hb_cols].copy() if hb_cols else pd.DataFrame()
 
     toppscorere_df = toppscorere_df.loc[:, ~toppscorere_df.columns.astype(str).str.contains(r"^Unnamed")]
     toppscorere_df = toppscorere_df.dropna(axis=1, how="all")
@@ -99,10 +111,10 @@ def load_data():
         hendelser_df = hendelser_df.loc[:, ~hendelser_df.columns.astype(str).str.contains(r"^Unnamed")]
         hendelser_df = hendelser_df.dropna(axis=1, how="all")
 
-    return poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, kamptips_df, sheet_names
+    return poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, kamptips_df, sheet_names, honorbox_df, hb_historikk_df
 
 
-poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, kamptips_df, sheet_names = load_data()
+poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, kamptips_df, sheet_names, honorbox_df, hb_historikk_df = load_data()
 
 # -------------------------------------------------
 # KONVERTER TID
@@ -211,12 +223,21 @@ def parse_endring(val):
 endrings_verdier = [parse_endring(r["24t"]) for _, r in ranking_df.iterrows()]
 max_endring = max((v for v in endrings_verdier if v is not None), default=None)
 
+honorbox_lookup = dict(zip(honorbox_df["Deltaker"], honorbox_df["HonorBox"])) if not honorbox_df.empty else {}
+
+def poeng_td(deltaker, poeng):
+    poeng_str = str(int(poeng)) if pd.notna(poeng) else ""
+    hb = honorbox_lookup.get(deltaker)
+    if hb is not None and hb != 0:
+        return f"<td data-hb='Honor Box: {hb:+d}'><span class='hb-wrap'>{poeng_str}</span></td>"
+    return f"<td>{poeng_str}</td>"
+
 rows_html = "\n".join(
     f"<tr>"
     f"<td>{row.Plass} {trend_html(row['Trend'])}</td>"
     f"<td>{row.Medalje}</td>"
     f"<td>{row.Deltaker}</td>"
-    f"<td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td>"
+    f"{poeng_td(row.Deltaker, row.Poeng)}"
     f"<td style='color:{'#2a2' if str(row['24t']).startswith('+') else '#c33' if str(row['24t']).startswith('-') else '#888'};{' font-weight:700;' if max_endring is not None and parse_endring(row['24t']) == max_endring and max_endring > 0 else ''}'>{row['24t']}</td>"
     f"</tr>"
     for _, row in ranking_df.iterrows()
@@ -249,6 +270,30 @@ ranking_html = f"""
 .ranking-table tr:nth-child(even) td {{
     background-color: rgba(0, 0, 0, 0.02);
 }}
+.hb-wrap {{
+    text-decoration: underline dotted;
+}}
+td[data-hb] {{
+    position: relative;
+    cursor: help;
+}}
+td[data-hb]::after {{
+    content: attr(data-hb);
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 110%;
+    background: #222;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 9999;
+}}
+td[data-hb]:hover::after {{
+    display: block;
+}}
 </style>
 
 <div class="ranking-wrap">
@@ -267,6 +312,25 @@ ranking_html = f"""
     </tbody>
 </table>
 </div>
+<div id="hb-tooltip" style="display:none;position:fixed;background:#222;color:#fff;padding:4px 8px;border-radius:5px;font-size:0.80rem;white-space:nowrap;z-index:9999;pointer-events:none;"></div>
+<script>
+(function(){{
+  var tip = document.getElementById('hb-tooltip');
+  document.querySelectorAll('[data-hb]').forEach(function(el){{
+    el.addEventListener('mouseenter', function(e){{
+      tip.textContent = el.getAttribute('data-hb');
+      tip.style.display = 'block';
+    }});
+    el.addEventListener('mousemove', function(e){{
+      tip.style.left = (e.clientX + 12) + 'px';
+      tip.style.top  = (e.clientY - 28) + 'px';
+    }});
+    el.addEventListener('mouseleave', function(){{
+      tip.style.display = 'none';
+    }});
+  }});
+}})();
+</script>
 """
 
 # -------------------------------------------------
@@ -409,11 +473,37 @@ def poengendring_ved_rad(ts, poeng_df, deltaker_cols):
     return "<br>".join(parts)
 
 # -------------------------------------------------
+# LAYOUT – kolonner defineres her så radio kan leses FØR grafen bygges
+# -------------------------------------------------
+main_col, side_col = st.columns([5.8, 1.8], gap="large")
+
+with side_col:
+    graf_valg = st.radio(
+        "Toppscorerpoeng",
+        ["Med toppscorerpoeng", "Uten toppscorerpoeng"],
+        key="graf_valg_side",
+    )
+
+# -------------------------------------------------
 # PLOT
 # -------------------------------------------------
+
 poeng_plot = poeng_df.copy()
 poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
 poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
+
+if graf_valg == "Uten toppscorerpoeng" and not hb_historikk_df.empty:
+    hb_plot = hb_historikk_df.copy()
+    hb_plot["tid"] = pd.to_datetime(hb_plot["tid"], errors="coerce")
+    hb_plot = hb_plot.dropna(subset=["tid"])
+    for deltaker in DELTAKER_COLS:
+        hb_col = f"HB_{deltaker}"
+        if hb_col in hb_plot.columns:
+            merged = poeng_plot[["tid"]].merge(
+                hb_plot[["tid", hb_col]], on="tid", how="left"
+            )
+            hb_vals = pd.to_numeric(merged[hb_col], errors="coerce").fillna(0)
+            poeng_plot[deltaker] = pd.to_numeric(poeng_plot[deltaker], errors="coerce") - hb_vals
 
 deltaker_cols = DELTAKER_COLS
 
@@ -539,11 +629,6 @@ fig.update_layout(
     )
 )
 
-
-# -------------------------------------------------
-# LAYOUT
-# -------------------------------------------------
-main_col, side_col = st.columns([5.8, 1.8], gap="large")
 
 with main_col:
     st.plotly_chart(fig, use_container_width=True)
