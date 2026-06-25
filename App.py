@@ -653,7 +653,7 @@ fig.update_layout(
 
 
 with main_col:
-    st.plotly_chart(fig, use_container_width=True, config={"doubleClick": False})
+    st.plotly_chart(fig, use_container_width=True)
     st.markdown("""
 <script>
 (function() {
@@ -665,12 +665,14 @@ with main_col:
       g._vmDbl = true;
       g.on('plotly_doubleclick', function() {
         var r = g.layout && g.layout.xaxis && g.layout.xaxis.range;
-        if (r) {
-          Plotly.relayout(g, {'xaxis.autorange': true});
-        } else {
-          var now = new Date();
-          Plotly.relayout(g, {'xaxis.range': [new Date(now - 86400000).toISOString(), now.toISOString()]});
-        }
+        setTimeout(function() {
+          if (r) {
+            Plotly.relayout(g, {'xaxis.autorange': true});
+          } else {
+            var now = new Date();
+            Plotly.relayout(g, {'xaxis.range': [new Date(now - 86400000).toISOString(), now.toISOString()]});
+          }
+        }, 0);
       });
     });
   }
