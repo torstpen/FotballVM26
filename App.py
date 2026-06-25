@@ -653,7 +653,33 @@ fig.update_layout(
 
 
 with main_col:
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={"doubleClick": False})
+    st.markdown("""
+<script>
+(function() {
+  function attach() {
+    var graphs = document.querySelectorAll('.js-plotly-plot');
+    if (!graphs.length) { setTimeout(attach, 200); return; }
+    graphs.forEach(function(g) {
+      if (g._vmDbl) return;
+      g._vmDbl = true;
+      g.on('plotly_doubleclick', function() {
+        var r = g.layout && g.layout.xaxis && g.layout.xaxis.range;
+        if (r) {
+          Plotly.relayout(g, {'xaxis.autorange': true});
+        } else {
+          var now = new Date();
+          Plotly.relayout(g, {'xaxis.range': [new Date(now - 86400000).toISOString(), now.toISOString()]});
+        }
+      });
+    });
+  }
+  attach();
+  new MutationObserver(function() { attach(); })
+    .observe(document.body, {childList: true, subtree: true});
+})();
+</script>
+""", unsafe_allow_html=True)
 
     # Neste kamp-boks
     neste_kamp_html = ""
