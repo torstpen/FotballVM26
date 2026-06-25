@@ -510,14 +510,13 @@ if graf_valg == "Uten toppscorerpoeng" and not hb_historikk_df.empty:
     hb_plot = hb_historikk_df.copy()
     hb_plot["tid"] = _strip_tz(hb_plot["tid"])
     hb_plot = hb_plot.dropna(subset=["tid"]).reset_index(drop=True)
+    hb_lookup = hb_plot.drop_duplicates(subset=["tid"], keep="last").set_index("tid")
     for deltaker in DELTAKER_COLS:
         hb_col = f"HB_{deltaker}"
-        if hb_col in hb_plot.columns:
-            merged = poeng_plot[["tid"]].merge(
-                hb_plot[["tid", hb_col]], on="tid", how="left"
-            )
-            hb_vals = pd.to_numeric(merged[hb_col], errors="coerce").fillna(0).values
-            poeng_plot[deltaker] = pd.to_numeric(poeng_plot[deltaker], errors="coerce").values - hb_vals
+        if hb_col in hb_lookup.columns:
+            hb_vals = poeng_plot["tid"].map(hb_lookup[hb_col])
+            hb_vals = pd.to_numeric(hb_vals, errors="coerce").fillna(0)
+            poeng_plot[deltaker] = pd.to_numeric(poeng_plot[deltaker], errors="coerce") - hb_vals.values
 
 deltaker_cols = DELTAKER_COLS
 
