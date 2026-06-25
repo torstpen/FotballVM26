@@ -15,7 +15,9 @@ URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.x
 
 def _strip_tz(s):
     s = pd.to_datetime(s, errors="coerce")
-    return s.dt.tz_convert(None) if s.dt.tz is not None else s
+    if s.dt.tz is not None:
+        return s.dt.tz_convert("Europe/Oslo").dt.tz_localize(None)
+    return s
 
 def excel_tid_til_datetime(series):
     if pd.api.types.is_numeric_dtype(series):
