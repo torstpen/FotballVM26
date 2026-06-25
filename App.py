@@ -100,8 +100,16 @@ def load_data():
     poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
     poeng_df = poeng_df.dropna(axis=1, how="all")
 
-    # Les HB_*-kolonner fra Poeng-arket for historisk Honor Box
+    # Les HB_*-kolonner fra Poeng-arket for historisk Honor Box.
+    # Støtter både "HB_Navn" (korrekt) og "Navn.2" (pandas-duplikat når headers ble manuelt fylt inn).
     hb_cols = [c for c in poeng_df.columns if str(c).startswith("HB_")]
+    if not hb_cols:
+        # Fallback: kolonner med .2-suffix er sannsynligvis HB-kolonner
+        import re as _re
+        dot2_cols = [c for c in poeng_df.columns if _re.search(r'\.2$', str(c))]
+        rename_map = {c: f"HB_{_re.sub(r'\.2$', '', str(c))}" for c in dot2_cols}
+        poeng_df = poeng_df.rename(columns=rename_map)
+        hb_cols = [c for c in poeng_df.columns if str(c).startswith("HB_")]
     hb_historikk_df = poeng_df[["tid"] + hb_cols].copy() if hb_cols else pd.DataFrame()
 
     toppscorere_df = toppscorere_df.loc[:, ~toppscorere_df.columns.astype(str).str.contains(r"^Unnamed")]
