@@ -13,6 +13,10 @@ st.set_page_config(layout="wide")
 OSLO = "Europe/Oslo"
 URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
 
+def _strip_tz(s):
+    s = pd.to_datetime(s, errors="coerce")
+    return s.dt.tz_convert(None) if s.dt.tz is not None else s
+
 def excel_tid_til_datetime(series):
     if pd.api.types.is_numeric_dtype(series):
         dt = pd.to_datetime(series, unit="D", origin="1899-12-30", errors="coerce")
@@ -495,10 +499,6 @@ with side_col:
 # -------------------------------------------------
 # PLOT
 # -------------------------------------------------
-
-def _strip_tz(s):
-    s = pd.to_datetime(s, errors="coerce")
-    return s.dt.tz_convert(None) if s.dt.tz is not None else s
 
 poeng_plot = poeng_df.copy()
 poeng_plot["tid"] = _strip_tz(poeng_plot["tid"])
