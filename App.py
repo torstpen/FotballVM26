@@ -587,8 +587,15 @@ if not label_df.empty:
         )
     )
 
+xaxis_range = (
+    [now - pd.Timedelta(hours=24), now]
+    if "graf_zoom_init" not in st.session_state
+    else None
+)
+st.session_state["graf_zoom_init"] = True
+
 fig.update_xaxes(
-    range=[now - pd.Timedelta(hours=24), now],
+    **({"range": xaxis_range} if xaxis_range else {}),
     showspikes=True,
     spikemode="across",
     spikesnap="data",
