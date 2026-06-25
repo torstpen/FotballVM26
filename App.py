@@ -502,20 +502,20 @@ with side_col:
 
 poeng_plot = poeng_df.copy()
 poeng_plot["tid"] = _strip_tz(poeng_plot["tid"])
-poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
+poeng_plot = poeng_plot.dropna(subset=["tid"]).reset_index(drop=True)
 
 if graf_valg == "Uten toppscorerpoeng" and not hb_historikk_df.empty:
     hb_plot = hb_historikk_df.copy()
     hb_plot["tid"] = _strip_tz(hb_plot["tid"])
-    hb_plot = hb_plot.dropna(subset=["tid"])
+    hb_plot = hb_plot.dropna(subset=["tid"]).reset_index(drop=True)
     for deltaker in DELTAKER_COLS:
         hb_col = f"HB_{deltaker}"
         if hb_col in hb_plot.columns:
             merged = poeng_plot[["tid"]].merge(
                 hb_plot[["tid", hb_col]], on="tid", how="left"
             )
-            hb_vals = pd.to_numeric(merged[hb_col], errors="coerce").fillna(0)
-            poeng_plot[deltaker] = pd.to_numeric(poeng_plot[deltaker], errors="coerce") - hb_vals
+            hb_vals = pd.to_numeric(merged[hb_col], errors="coerce").fillna(0).values
+            poeng_plot[deltaker] = pd.to_numeric(poeng_plot[deltaker], errors="coerce").values - hb_vals
 
 deltaker_cols = DELTAKER_COLS
 
