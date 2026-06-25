@@ -424,7 +424,7 @@ if hendelser_df is not None:
         hendelser_lookup_df.columns = ["DatoTid", "Hendelse"] + (["Type"] if type_col else [])
         if "Type" not in hendelser_lookup_df.columns:
             hendelser_lookup_df["Type"] = ""
-        hendelser_lookup_df["DatoTid"] = excel_tid_til_datetime(hendelser_lookup_df["DatoTid"])
+        hendelser_lookup_df["DatoTid"] = _strip_tz(excel_tid_til_datetime(hendelser_lookup_df["DatoTid"]))
         hendelser_lookup_df = hendelser_lookup_df.dropna(subset=["DatoTid", "Hendelse"]).sort_values("DatoTid").reset_index(drop=True)
 
 # -------------------------------------------------
@@ -496,19 +496,18 @@ with side_col:
 # PLOT
 # -------------------------------------------------
 
-poeng_plot = poeng_df.copy()
-poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
-poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
-
 def _strip_tz(s):
     s = pd.to_datetime(s, errors="coerce")
     return s.dt.tz_convert(None) if s.dt.tz is not None else s
+
+poeng_plot = poeng_df.copy()
+poeng_plot["tid"] = _strip_tz(poeng_plot["tid"])
+poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 
 if graf_valg == "Uten toppscorerpoeng" and not hb_historikk_df.empty:
     hb_plot = hb_historikk_df.copy()
     hb_plot["tid"] = _strip_tz(hb_plot["tid"])
     hb_plot = hb_plot.dropna(subset=["tid"])
-    poeng_plot["tid"] = _strip_tz(poeng_plot["tid"])
     for deltaker in DELTAKER_COLS:
         hb_col = f"HB_{deltaker}"
         if hb_col in hb_plot.columns:
