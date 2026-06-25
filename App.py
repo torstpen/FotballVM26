@@ -598,9 +598,10 @@ fig.update_xaxes(
 # -------------------------------------------------
 # Y-AKSE: zoom inn til nærmeste 5 poeng under/over
 # -------------------------------------------------
+now_naive = now.tz_localize(None) if now.tzinfo is None else now.tz_convert(None)
 visible_df = poeng_plot[
-    (poeng_plot["tid"] >= now - pd.Timedelta(hours=24)) &
-    (poeng_plot["tid"] <= now)
+    (poeng_plot["tid"] >= now_naive - pd.Timedelta(hours=24)) &
+    (poeng_plot["tid"] <= now_naive)
 ].copy()
 
 y_values = visible_df[deltaker_cols].apply(pd.to_numeric, errors="coerce").to_numpy().ravel()
