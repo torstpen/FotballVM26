@@ -626,6 +626,7 @@ else:
     y_upper = 10
 
 fig.update_layout(
+    uirevision="zoom",
     height=graph_height,
     margin=dict(l=0, r=0, t=0, b=0),
     hovermode="x",
