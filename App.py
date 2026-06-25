@@ -500,10 +500,15 @@ poeng_plot = poeng_df.copy()
 poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
 poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 
+def _strip_tz(s):
+    s = pd.to_datetime(s, errors="coerce")
+    return s.dt.tz_convert(None) if s.dt.tz is not None else s
+
 if graf_valg == "Uten toppscorerpoeng" and not hb_historikk_df.empty:
     hb_plot = hb_historikk_df.copy()
-    hb_plot["tid"] = pd.to_datetime(hb_plot["tid"], errors="coerce")
+    hb_plot["tid"] = _strip_tz(hb_plot["tid"])
     hb_plot = hb_plot.dropna(subset=["tid"])
+    poeng_plot["tid"] = _strip_tz(poeng_plot["tid"])
     for deltaker in DELTAKER_COLS:
         hb_col = f"HB_{deltaker}"
         if hb_col in hb_plot.columns:
