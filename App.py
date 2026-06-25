@@ -475,7 +475,7 @@ if not label_df.empty:
     fig.add_trace(
         go.Scatter(
             x=[now] * len(label_df),
-            y=label_df["Poeng"] + 0.5,
+            y=label_df["Poeng"] + 1,
             mode="text",
             text=label_df["Deltaker"],
             textposition="middle left",
