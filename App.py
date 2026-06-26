@@ -4,179 +4,77 @@ import streamlit as st
 import requests
 from io import BytesIO
 
-# -------------------------------------------------
-# KONFIG
-# -------------------------------------------------
 graph_height = 700
+
+# -------------------------------------------------
+# SIDELAYOUT
+# -------------------------------------------------
+st.set_page_config(layout="wide")
 OSLO = "Europe/Oslo"
 URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
 
-st.set_page_config(layout="wide")
-
-# -------------------------------------------------
-# GLOBAL CSS
-# -------------------------------------------------
 st.markdown("""
 <style>
+.match-box,
+.event-box,
 .ranking-box,
-.hendelser-box,
-.kamp-box,
-.aktiv-box,
-.neste-box {
-    background-color: #fafafa !important;
-    color: #222 !important;
-    border: 1px solid rgba(49, 51, 63, 0.15) !important;
-    border-radius: 10px !important;
-    box-sizing: border-box !important;
-}
-
-.ranking-box *,
-.hendelser-box *,
-.kamp-box *,
-.aktiv-box *,
-.neste-box * {
-    background-color: inherit;
-    color: inherit;
-}
-
-.ranking-box {
-    width: 100%;
-    padding: 8px 10px;
-}
-
-.ranking-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-    font-size: 0.80rem;
-    background-color: #fafafa !important;
-}
-
+.ranking-wrap,
+.ranking-table,
 .ranking-table thead,
 .ranking-table tbody,
 .ranking-table tr,
 .ranking-table th,
 .ranking-table td {
-    background-color: #fafafa !important;
+    background: #fafafa !important;
+}
+
+.ranking-box {
+    padding: 0;
+    border-radius: 10px;
+}
+
+.ranking-wrap {
+    width: 100%;
+}
+
+.ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.80rem;
+    table-layout: fixed;
 }
 
 .ranking-table th,
 .ranking-table td {
+    white-space: nowrap;
     padding: 0.15rem 0.30rem;
     text-align: left;
     border-bottom: 1px solid rgba(49, 51, 63, 0.14);
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .ranking-table th {
     font-weight: 600;
+    background-color: #fafafa !important;
 }
 
 .ranking-table tr:nth-child(even) td {
-    background-color: rgba(255, 255, 255, 0.04) !important;
-}
-
-.hendelser-box {
-    width: 100%;
-    padding: 0;
-}
-
-.hendelser-row {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 10px;
-    overflow-x: auto;
-    padding-bottom: 6px;
-}
-
-.hendelse-card {
-    display: inline-block;
-    vertical-align: top;
-    min-width: 180px;
-    max-width: 250px;
-    padding: 8px 10px;
-    font-size: 0.90rem;
-    border-radius: 10px;
-    border: 1px solid rgba(49, 51, 63, 0.15);
-    background-color: #fafafa !important;
-    box-sizing: border-box;
-}
-
-.kamp-box {
-    width: 100%;
-    padding: 8px 10px;
-    font-size: 0.90rem;
-}
-
-.kamp-rad,
-.neste-kamp-rad,
-.aktiv-kamp-rad {
-    position: relative;
-}
-
-.neste-tip,
-.aktiv-tip {
-    display: none;
-    position: absolute;
-    background: #222;
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.78rem;
-    font-weight: 400;
-    white-space: nowrap;
-    z-index: 9999;
-    min-width: 160px;
-}
-
-.neste-kamp-rad:hover .neste-tip,
-.aktiv-kamp-rad:hover .aktiv-tip {
-    display: block;
-}
-
-.neste-tip {
-    left: 0;
-    top: 100%;
-}
-
-.aktiv-tip {
-    right: 0;
-    top: 110%;
-}
-
-@keyframes rec-blink {
-    0%,100% { opacity: 1; }
-    50% { opacity: 0.15; }
-}
-
-.rec-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #e00;
-    margin-right: 5px;
-    vertical-align: middle;
-    animation: rec-blink 1.2s ease-in-out infinite;
+    background-color: rgba(255, 255, 255, 0.04);
 }
 
 @media (prefers-color-scheme: dark) {
+    .match-box,
+    .event-box,
     .ranking-box,
-    .hendelser-box,
-    .kamp-box,
-    .aktiv-box,
-    .neste-box,
+    .ranking-wrap,
     .ranking-table,
     .ranking-table thead,
     .ranking-table tbody,
     .ranking-table tr,
     .ranking-table th,
-    .ranking-table td,
-    .hendelse-card {
-        background-color: #1e1e1e !important;
-        color: #f2f2f2 !important;
+    .ranking-table td {
+        background: #1e1e1e !important;
     }
 
     .ranking-table th,
@@ -187,66 +85,30 @@ st.markdown("""
     .ranking-table tr:nth-child(even) td {
         background-color: #242424 !important;
     }
-
-    .neste-tip,
-    .aktiv-tip {
-        background: #111;
-        color: #fff;
-    }
 }
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------
-# HJELPEFUNKSJONER
-# -------------------------------------------------
 def excel_tid_til_datetime(series):
     if pd.api.types.is_numeric_dtype(series):
         dt = pd.to_datetime(series, unit="D", origin="1899-12-30", errors="coerce")
     else:
         dt = pd.to_datetime(series, errors="coerce")
-    return dt
+    return dt.dt.tz_localize("Europe/Oslo", nonexistent="NaT", ambiguous="NaT")
 
-def finn_nærmeste_hendelse(ts, events_df, max_diff="45s"):
-    if events_df is None or events_df.empty or pd.isna(ts):
-        return ""
-    diffs = (events_df["DatoTid"] - ts).abs()
-    idx = diffs.idxmin()
-    if diffs.loc[idx] <= pd.Timedelta(max_diff):
-        row = events_df.loc[idx]
-        type_str = str(row.get("Type", "")) if "Type" in events_df.columns else ""
-        hendelse_str = str(row["Hendelse"])
-        if type_str and type_str != "nan":
-            return f"{type_str}<br>{hendelse_str}"
-        return hendelse_str
-    return ""
+def to_oslo_datetime(series):
+    dt = pd.to_datetime(series, errors="coerce")
+    if dt.notna().sum() == 0:
+        dt = pd.to_datetime(series, unit="D", origin="1899-12-30", errors="coerce")
+    if getattr(dt.dt, "tz", None) is None:
+        return dt.dt.tz_localize(OSLO)
+    return dt.dt.tz_convert(OSLO)
 
-def poengendring_ved_rad(ts, poeng_df, deltaker_cols):
-    after_rows  = poeng_df[poeng_df["tid"] == ts]
-    before_rows = poeng_df[poeng_df["tid"] < ts]
-    if after_rows.empty or before_rows.empty:
-        return ""
-    after_row  = after_rows.iloc[0]
-    before_row = before_rows.iloc[-1]
-    diffs = {}
-    for deltaker in deltaker_cols:
-        b = pd.to_numeric(before_row[deltaker], errors="coerce")
-        a = pd.to_numeric(after_row[deltaker], errors="coerce")
-        if pd.notna(b) and pd.notna(a) and a - b != 0:
-            diffs.setdefault(int(a - b), []).append(str(deltaker))
-    parts = []
-    for diff in sorted(diffs.keys(), reverse=True):
-        sign = "+" if diff > 0 else ""
-        parts.append(f"{sign}{diff} {', '.join(sorted(diffs[diff]))}")
-    return "<br>".join(parts)
-
-# -------------------------------------------------
-# LAST DATA
-# -------------------------------------------------
 @st.cache_data(ttl=30)
 def load_data():
     r = requests.get(URL, timeout=20)
     r.raise_for_status()
+
     xls = pd.ExcelFile(BytesIO(r.content))
     sheet_names = xls.sheet_names
 
@@ -259,7 +121,6 @@ def load_data():
     poeng_raw.columns = pcols
     h_cols = [c for c in pcols if c.lower() == "hendelse"]
     t_cols = [c for c in pcols if c.lower() == "type"]
-    hendelser_df = None
     if h_cols:
         rows = poeng_raw[poeng_raw[h_cols[0]].notna()].copy()
         keep = {"tid": pcols[0], "Hendelse": h_cols[0]}
@@ -267,45 +128,69 @@ def load_data():
             keep["Type"] = t_cols[0]
         hendelser_df = rows[[keep["tid"], keep["Hendelse"]] + ([keep["Type"]] if "Type" in keep else [])].copy()
         hendelser_df.columns = ["tid", "Hendelse"] + (["Type"] if "Type" in keep else [])
+    else:
+        hendelser_df = None
 
-    neste_kamp_df = pd.read_excel(xls, sheet_name="Neste kamp").dropna(how="all") if "Neste kamp" in sheet_names else None
-    aktiv_kamp_df = pd.read_excel(xls, sheet_name="Aktiv kamp").dropna(how="all") if "Aktiv kamp" in sheet_names else None
-    kamptips_df = pd.read_excel(xls, sheet_name="Kamptips").dropna(how="all") if "Kamptips" in sheet_names else None
+    if "Neste kamp" in sheet_names:
+        neste_kamp_df = pd.read_excel(xls, sheet_name="Neste kamp", header=0).dropna(how="all")
+    else:
+        neste_kamp_df = None
+
+    if "Aktiv kamp" in sheet_names:
+        aktiv_kamp_df = pd.read_excel(xls, sheet_name="Aktiv kamp", header=0).dropna(how="all")
+    else:
+        aktiv_kamp_df = None
+
+    if "Kamptips" in sheet_names:
+        kamptips_df = pd.read_excel(xls, sheet_name="Kamptips", header=0).dropna(how="all")
+    else:
+        kamptips_df = None
+
+    poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
+    poeng_df = poeng_df.dropna(axis=1, how="all")
+
+    toppscorere_df = toppscorere_df.loc[:, ~toppscorere_df.columns.astype(str).str.contains(r"^Unnamed")]
+    toppscorere_df = toppscorere_df.dropna(axis=1, how="all")
+
+    if hendelser_df is not None:
+        hendelser_df = hendelser_df.loc[:, ~hendelser_df.columns.astype(str).str.contains(r"^Unnamed")]
+        hendelser_df = hendelser_df.dropna(axis=1, how="all")
 
     return poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, kamptips_df, sheet_names
+
 
 poeng_df, toppscorere_df, hendelser_df, neste_kamp_df, aktiv_kamp_df, kamptips_df, sheet_names = load_data()
 
 # -------------------------------------------------
-# PREP
+# KONVERTER TID
 # -------------------------------------------------
-poeng_df = poeng_df.loc[:, ~poeng_df.columns.astype(str).str.contains(r"^Unnamed")]
-poeng_df = poeng_df.dropna(axis=1, how="all")
-
 def _parse_tid_value(v):
     if v is None or (isinstance(v, float) and pd.isna(v)):
         return pd.NaT
     if isinstance(v, (int, float)):
         return pd.Timestamp("1899-12-30") + pd.Timedelta(days=float(v))
+    if hasattr(v, "year"):
+        return pd.Timestamp(v)
     try:
         return pd.to_datetime(str(v), dayfirst=True)
     except Exception:
         return pd.NaT
 
-OSLO = "Europe/Oslo"
-poeng_df["tid"] = pd.to_datetime([_parse_tid_value(v) for v in poeng_df.iloc[:, 0]], errors="coerce")
+poeng_df["tid"] = pd.to_datetime([_parse_tid_value(v) for v in poeng_df["tid"]], utc=False)
 if poeng_df["tid"].dt.tz is None:
     poeng_df["tid"] = poeng_df["tid"].dt.tz_localize(OSLO)
 else:
     poeng_df["tid"] = poeng_df["tid"].dt.tz_convert(OSLO)
-
 poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 
 NON_DELTAKER_COLS = {"tid", "row_id", "Hendelse", "hendelse", "Type", "type", "matchid", "Matchid", "MatchId"}
-deltaker_cols = [c for c in poeng_df.columns if c not in NON_DELTAKER_COLS and c != "tid"]
-poeng_df = poeng_df[["tid"] + deltaker_cols].copy()
+DELTAKER_COLS = [c for c in poeng_df.columns if c not in NON_DELTAKER_COLS and c != "tid"][:12]
+poeng_df = poeng_df[["tid"] + DELTAKER_COLS].copy()
 poeng_df["row_id"] = range(len(poeng_df))
 
+# -------------------------------------------------
+# LEGG TIL EKSTRA PUNKT MED NÅTID (NORSK TID)
+# -------------------------------------------------
 now = pd.Timestamp.now(tz=OSLO).floor("min")
 latest_row = poeng_df.iloc[-1].copy()
 latest_row["tid"] = now
@@ -313,7 +198,7 @@ latest_row["row_id"] = poeng_df["row_id"].max() + 1
 poeng_df = pd.concat([poeng_df, pd.DataFrame([latest_row])], ignore_index=True)
 
 # -------------------------------------------------
-# RANKING
+# RANGERING
 # -------------------------------------------------
 latest = poeng_df.iloc[-2]
 ranking_df = latest.drop(["tid", "row_id"]).reset_index()
@@ -327,11 +212,11 @@ ranking_df["Medalje"] = ranking_df["Plass"].map(medals).fillna("")
 
 cutoff_24h = now - pd.Timedelta(hours=24)
 row_24h = poeng_df[poeng_df["tid"] <= cutoff_24h].tail(1)
-
 if not row_24h.empty:
     row_24h = row_24h.iloc[0]
+    deltaker_cols_rank = DELTAKER_COLS
     rang_24h = (
-        pd.Series({d: pd.to_numeric(row_24h[d], errors="coerce") for d in deltaker_cols})
+        pd.Series({d: pd.to_numeric(row_24h[d], errors="coerce") for d in deltaker_cols_rank})
         .dropna()
         .rank(method="min", ascending=False)
         .astype(int)
@@ -380,33 +265,38 @@ def parse_endring(val):
     except (ValueError, TypeError):
         return None
 
+endrings_verdier = [parse_endring(r["24t"]) for _, r in ranking_df.iterrows()]
+max_endring = max((v for v in endrings_verdier if v is not None), default=None)
+
 rows_html = "\n".join(
     f"<tr>"
     f"<td>{row.Plass} {trend_html(row['Trend'])}</td>"
     f"<td>{row.Medalje}</td>"
     f"<td>{row.Deltaker}</td>"
     f"<td>{int(row.Poeng) if pd.notna(row.Poeng) else ''}</td>"
-    f"<td style='color:{'#2a2' if str(row['24t']).startswith('+') else '#c33' if str(row['24t']).startswith('-') else '#888'};'>{row['24t']}</td>"
+    f"<td style='color:{'#2a2' if str(row['24t']).startswith('+') else '#c33' if str(row['24t']).startswith('-') else '#888'};{' font-weight:700;' if max_endring is not None and parse_endring(row['24t']) == max_endring and max_endring > 0 else ''}'>{row['24t']}</td>"
     f"</tr>"
     for _, row in ranking_df.iterrows()
 )
 
 ranking_html = f"""
 <div class="ranking-box">
-    <table class="ranking-table">
-        <thead>
-            <tr>
-                <th style="width:20%;">Plass</th>
-                <th style="width:10%;"></th>
-                <th style="width:42%;">Deltaker</th>
-                <th style="width:14%;">Poeng</th>
-                <th style="width:14%;">24t</th>
-            </tr>
-        </thead>
-        <tbody>
-            {rows_html}
-        </tbody>
-    </table>
+    <div class="ranking-wrap">
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th style="width:20%;">Plass</th>
+                    <th style="width:10%;"></th>
+                    <th style="width:42%;">Deltaker</th>
+                    <th style="width:14%;">Poeng</th>
+                    <th style="width:14%;">24t</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+    </div>
 </div>
 """
 
@@ -414,6 +304,7 @@ ranking_html = f"""
 # TOPPSCORERE
 # -------------------------------------------------
 toppscorere_df.columns = toppscorere_df.columns.astype(str).str.strip()
+
 col_map = {}
 for col in toppscorere_df.columns:
     low = col.lower()
@@ -424,6 +315,12 @@ for col in toppscorere_df.columns:
     elif "mål" in low or "maal" in low or "goals" in low:
         col_map["Mål"] = col
 
+missing = [k for k in ["Navn", "Land", "Mål"] if k not in col_map]
+if missing:
+    st.error(f"Mangler kolonner i arket Toppscorere: {missing}")
+    st.write("Fant disse kolonnene:", toppscorere_df.columns.tolist())
+    st.stop()
+
 toppscorere_top3 = toppscorere_df[[col_map["Navn"], col_map["Land"], col_map["Mål"]]].head(10)
 toppscorere_top3.columns = ["Navn", "Land", "Mål"]
 
@@ -432,42 +329,106 @@ toppscorere_top3.columns = ["Navn", "Land", "Mål"]
 # -------------------------------------------------
 hendelser_vis = None
 hendelser_lookup_df = None
+
 if hendelser_df is not None:
     hendelser_df.columns = hendelser_df.columns.astype(str).str.strip()
-    tid_col = hendelser_df.columns[0]
-    tekst_col = hendelser_df.columns[1]
-    type_col = hendelser_df.columns[2] if len(hendelser_df.columns) > 2 else None
 
-    hendelser_vis = hendelser_df.copy()
-    hendelser_vis["DatoTid"] = excel_tid_til_datetime(hendelser_vis[tid_col])
-    hendelser_vis = hendelser_vis.dropna(subset=["DatoTid", tekst_col])
+    tid_col = None
+    tekst_col = None
+    type_col = None
 
-    cutoff = pd.Timestamp.now(tz=OSLO) - pd.Timedelta(hours=24)
-    siste_24t = hendelser_vis[hendelser_vis["DatoTid"] >= cutoff]
-    if len(siste_24t) < 20:
-        mangler = 20 - len(siste_24t)
-        eldre = hendelser_vis[hendelser_vis["DatoTid"] < cutoff].head(mangler)
-        hendelser_vis = pd.concat([siste_24t, eldre], ignore_index=True)
-    else:
-        hendelser_vis = siste_24t
+    for col in hendelser_df.columns:
+        low = col.lower()
+        if "tid" in low or "time" in low or "dato" in low:
+            tid_col = col
+        elif "hend" in low or "event" in low or "beskjed" in low or "tekst" in low:
+            tekst_col = col
+        elif "type" in low:
+            type_col = col
 
-    hendelser_vis = hendelser_vis.sort_values("DatoTid", ascending=False)
-    hendelser_vis["Tid"] = hendelser_vis["DatoTid"].dt.strftime("%d.%m %H:%M")
-    hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
-    hendelser_vis["Type"] = hendelser_vis[type_col].astype(str) if type_col is not None else ""
-    hendelser_vis = hendelser_vis[["DatoTid", "Tid", "Type", "Hendelse"]]
+    if tid_col is None and len(hendelser_df.columns) >= 1:
+        tid_col = hendelser_df.columns[0]
+    if tekst_col is None and len(hendelser_df.columns) >= 2:
+        tekst_col = hendelser_df.columns[1]
 
-    hendelser_lookup_df = hendelser_df[[tid_col, tekst_col] + ([type_col] if type_col else [])].copy()
-    hendelser_lookup_df.columns = ["DatoTid", "Hendelse"] + (["Type"] if type_col else [])
-    if "Type" not in hendelser_lookup_df.columns:
-        hendelser_lookup_df["Type"] = ""
-    hendelser_lookup_df["DatoTid"] = excel_tid_til_datetime(hendelser_lookup_df["DatoTid"])
-    hendelser_lookup_df = hendelser_lookup_df.dropna(subset=["DatoTid", "Hendelse"]).sort_values("DatoTid").reset_index(drop=True)
+    if tid_col is not None and tekst_col is not None:
+        cols = [tid_col, tekst_col]
+        if type_col is not None:
+            cols.append(type_col)
+
+        hendelser_vis = hendelser_df[cols].copy()
+        hendelser_vis["DatoTid"] = excel_tid_til_datetime(hendelser_vis[tid_col])
+        hendelser_vis = hendelser_vis.dropna(subset=["DatoTid", tekst_col])
+
+        cutoff = pd.Timestamp.now(tz=OSLO) - pd.Timedelta(hours=24)
+        siste_24t = hendelser_vis[hendelser_vis["DatoTid"] >= cutoff]
+
+        if len(siste_24t) < 20:
+            mangler = 20 - len(siste_24t)
+            eldre = hendelser_vis[hendelser_vis["DatoTid"] < cutoff].head(mangler)
+            hendelser_vis = pd.concat([siste_24t, eldre], ignore_index=True)
+        else:
+            hendelser_vis = siste_24t
+
+        hendelser_vis = hendelser_vis.sort_values("DatoTid", ascending=False)
+        hendelser_vis["Tid"] = hendelser_vis["DatoTid"].dt.strftime("%d.%m %H:%M")
+        hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
+        hendelser_vis["Type"] = hendelser_vis[type_col].astype(str) if type_col is not None else ""
+        hendelser_vis = hendelser_vis[["DatoTid", "Tid", "Type", "Hendelse"]]
+
+        lookup_cols = [tid_col, tekst_col] + ([type_col] if type_col else [])
+        hendelser_lookup_df = hendelser_df[lookup_cols].copy()
+        hendelser_lookup_df.columns = ["DatoTid", "Hendelse"] + (["Type"] if type_col else [])
+        if "Type" not in hendelser_lookup_df.columns:
+            hendelser_lookup_df["Type"] = ""
+        hendelser_lookup_df["DatoTid"] = excel_tid_til_datetime(hendelser_lookup_df["DatoTid"])
+        hendelser_lookup_df = hendelser_lookup_df.dropna(subset=["DatoTid", "Hendelse"]).sort_values("DatoTid").reset_index(drop=True)
+
+# -------------------------------------------------
+# HJELPEFUNKSJONER
+# -------------------------------------------------
+def finn_nærmeste_hendelse(ts, events_df, max_diff="45s"):
+    if events_df is None or events_df.empty or pd.isna(ts):
+        return ""
+
+    diffs = (events_df["DatoTid"] - ts).abs()
+    idx = diffs.idxmin()
+    if diffs.loc[idx] <= pd.Timedelta(max_diff):
+        row = events_df.loc[idx]
+        type_str = str(row.get("Type", "")) if "Type" in events_df.columns else ""
+        hendelse_str = str(row["Hendelse"])
+        if type_str and type_str != "nan":
+            return f"{type_str}<br>{hendelse_str}"
+        return hendelse_str
+    return ""
+
+def poengendring_ved_rad(ts, poeng_df, deltaker_cols):
+    after_rows  = poeng_df[poeng_df["tid"] == ts]
+    before_rows = poeng_df[poeng_df["tid"] < ts]
+    if after_rows.empty or before_rows.empty:
+        return ""
+    after_row  = after_rows.iloc[0]
+    before_row = before_rows.iloc[-1]
+    diffs = {}
+    for deltaker in deltaker_cols:
+        b = pd.to_numeric(before_row[deltaker], errors="coerce")
+        a = pd.to_numeric(after_row[deltaker], errors="coerce")
+        if pd.notna(b) and pd.notna(a) and a - b != 0:
+            diffs.setdefault(int(a - b), []).append(str(deltaker))
+    parts = []
+    for diff in sorted(diffs.keys(), reverse=True):
+        sign = "+" if diff > 0 else ""
+        parts.append(f"{sign}{diff} {', '.join(sorted(diffs[diff]))}")
+    return "<br>".join(parts)
 
 # -------------------------------------------------
 # PLOT
 # -------------------------------------------------
 poeng_plot = poeng_df.copy()
+poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
+poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
+
+deltaker_cols = DELTAKER_COLS
 fig = go.Figure()
 
 for deltaker in deltaker_cols:
@@ -504,10 +465,24 @@ for deltaker in deltaker_cols:
         last_points.append({"Deltaker": str(deltaker), "Poeng": poeng})
 
 last_points = pd.DataFrame(last_points)
-label_df = last_points.groupby("Poeng")["Deltaker"].apply(lambda s: ", ".join(s.sort_values().astype(str))).reset_index()
+label_df = (
+    last_points.groupby("Poeng")["Deltaker"]
+    .apply(lambda s: ", ".join(s.sort_values().astype(str)))
+    .reset_index()
+)
 
 if not label_df.empty:
-    fig.add_trace(go.Scatter(x=[now] * len(label_df), y=label_df["Poeng"] + 1, mode="text", text=label_df["Deltaker"], textposition="middle left", showlegend=False, hoverinfo="skip"))
+    fig.add_trace(
+        go.Scatter(
+            x=[now] * len(label_df),
+            y=label_df["Poeng"] + 1,
+            mode="text",
+            text=label_df["Deltaker"],
+            textposition="middle left",
+            showlegend=False,
+            hoverinfo="skip"
+        )
+    )
 
 fig.update_xaxes(
     range=[now - pd.Timedelta(hours=24), now],
@@ -614,7 +589,7 @@ with main_col:
             )
 
         neste_kamp_html = (
-            f'<div class="neste-box kamp-box">'
+            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;box-sizing:border-box;">'
             f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">{"Neste kamper" if len(neste_kamp_df) > 1 else "Neste kamp"}</div>'
             f'{kamp_linjer}'
             f'</div>'
@@ -624,9 +599,9 @@ with main_col:
         st.info(f"Fant ikke brukbare kolonner i arket 'Hendelser'. Tilgjengelige ark: {sheet_names}")
     else:
         hendelser_html = ""
-        if not hendelser_vis.empty:
+        if hendelser_vis is not None and not hendelser_vis.empty:
             hendelser_html = "".join(
-                f'<div class="hendelse-card">'
+                f'<div style="display:inline-block;vertical-align:top;min-width:180px;max-width:250px;margin-right:10px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;">'
                 f'<div style="font-weight:600;margin-bottom:3px;">{row.Tid}</div>'
                 f'<div style="font-size:0.82rem;color:#666;margin-bottom:3px;">{row.Type}</div>'
                 f'<div style="line-height:1.3;">{row.Hendelse}</div>'
@@ -635,7 +610,9 @@ with main_col:
             )
 
         st.markdown(
-            f'<div class="hendelser-box"><div class="hendelser-row">{hendelser_html}</div></div>',
+            '<div style="display:flex;flex-wrap:nowrap;gap:10px;overflow-x:auto;padding-bottom:6px;">'
+            + hendelser_html +
+            '</div>',
             unsafe_allow_html=True
         )
 
@@ -712,7 +689,7 @@ with side_col:
                 f'</div>'
             )
         aktiv_kamp_html = (
-            f'<div class="aktiv-box kamp-box">'
+            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;box-sizing:border-box;">'
             f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;"><span class="rec-dot"></span>Aktiv kamp</div>'
             f'{kamp_linjer}'
             f'</div>'
