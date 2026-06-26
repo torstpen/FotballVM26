@@ -28,6 +28,15 @@ st.markdown("""
     background: #fafafa !important;
 }
 
+.ranking-box {
+    padding: 0;
+    border-radius: 10px;
+}
+
+.ranking-wrap {
+    width: 100%;
+}
+
 .ranking-table {
     width: 100%;
     border-collapse: collapse;
@@ -85,29 +94,14 @@ def excel_tid_til_datetime(series):
         dt = pd.to_datetime(series, unit="D", origin="1899-12-30", errors="coerce")
     else:
         dt = pd.to_datetime(series, errors="coerce")
-
     return dt.dt.tz_localize("Europe/Oslo", nonexistent="NaT", ambiguous="NaT")
 
 def to_oslo_datetime(series):
-    """
-    Standardiserer ALL input til tz-aware Europe/Oslo datetime.
-    Støtter:
-    - Excel serial numbers
-    - strings
-    - datetime
-    """
-
-    # 1) forsøk vanlig parsing først (strings/datetime)
     dt = pd.to_datetime(series, errors="coerce")
-
-    # 2) hvis dette gir mye NaT → fallback til Excel serial
     if dt.notna().sum() == 0:
         dt = pd.to_datetime(series, unit="D", origin="1899-12-30", errors="coerce")
-
-    # 3) gjør ALT til Oslo tz-aware
     if getattr(dt.dt, "tz", None) is None:
         return dt.dt.tz_localize(OSLO)
-
     return dt.dt.tz_convert(OSLO)
 
 @st.cache_data(ttl=30)
@@ -121,7 +115,6 @@ def load_data():
     poeng_df = pd.read_excel(xls, sheet_name="Poeng")
     toppscorere_df = pd.read_excel(xls, sheet_name="Toppscorere")
 
-    # Les hendelser fra Poeng-arket (kolonnene Hendelse, Type og tid)
     poeng_raw = pd.read_excel(xls, sheet_name="Poeng")
     poeng_raw = poeng_raw.loc[:, ~poeng_raw.columns.astype(str).str.contains(r"^Unnamed")]
     pcols = [c.strip() for c in poeng_raw.columns.astype(str)]
@@ -139,20 +132,17 @@ def load_data():
         hendelser_df = None
 
     if "Neste kamp" in sheet_names:
-        neste_kamp_df = pd.read_excel(xls, sheet_name="Neste kamp", header=0)
-        neste_kamp_df = neste_kamp_df.dropna(how="all")
+        neste_kamp_df = pd.read_excel(xls, sheet_name="Neste kamp", header=0).dropna(how="all")
     else:
         neste_kamp_df = None
 
     if "Aktiv kamp" in sheet_names:
-        aktiv_kamp_df = pd.read_excel(xls, sheet_name="Aktiv kamp", header=0)
-        aktiv_kamp_df = aktiv_kamp_df.dropna(how="all")
+        aktiv_kamp_df = pd.read_excel(xls, sheet_name="Aktiv kamp", header=0).dropna(how="all")
     else:
         aktiv_kamp_df = None
 
     if "Kamptips" in sheet_names:
-        kamptips_df = pd.read_excel(xls, sheet_name="Kamptips", header=0)
-        kamptips_df = kamptips_df.dropna(how="all")
+        kamptips_df = pd.read_excel(xls, sheet_name="Kamptips", header=0).dropna(how="all")
     else:
         kamptips_df = None
 
@@ -179,7 +169,7 @@ def _parse_tid_value(v):
         return pd.NaT
     if isinstance(v, (int, float)):
         return pd.Timestamp("1899-12-30") + pd.Timedelta(days=float(v))
-    if hasattr(v, "year"):  # datetime object
+    if hasattr(v, "year"):
         return pd.Timestamp(v)
     try:
         return pd.to_datetime(str(v), dayfirst=True)
@@ -188,9 +178,9 @@ def _parse_tid_value(v):
 
 poeng_df["tid"] = pd.to_datetime([_parse_tid_value(v) for v in poeng_df["tid"]], utc=False)
 if poeng_df["tid"].dt.tz is None:
-    poeng_df["tid"] = poeng_df["tid"].dt.tz_localize("Europe/Oslo")
+    poeng_df["tid"] = poeng_df["tid"].dt.tz_localize(OSLO)
 else:
-    poeng_df["tid"] = poeng_df["tid"].dt.tz_convert("Europe/Oslo")
+    poeng_df["tid"] = poeng_df["tid"].dt.tz_convert(OSLO)
 poeng_df = poeng_df.dropna(subset=["tid"]).copy()
 
 NON_DELTAKER_COLS = {"tid", "row_id", "Hendelse", "hendelse", "Type", "type", "matchid", "Matchid", "MatchId"}
@@ -201,7 +191,7 @@ poeng_df["row_id"] = range(len(poeng_df))
 # -------------------------------------------------
 # LEGG TIL EKSTRA PUNKT MED NÅTID (NORSK TID)
 # -------------------------------------------------
-now = pd.Timestamp.now(tz="Europe/Oslo").floor("min")
+now = pd.Timestamp.now(tz=OSLO).floor("min")
 latest_row = poeng_df.iloc[-1].copy()
 latest_row["tid"] = now
 latest_row["row_id"] = poeng_df["row_id"].max() + 1
@@ -290,44 +280,6 @@ rows_html = "\n".join(
 )
 
 ranking_html = f"""
-<style>
-.ranking-box {{
-    background: #fafafa !important;
-}}
-
-@media (prefers-color-scheme: dark) {{
-    .ranking-box {{
-        background: #1e1e1e !important;
-    }}
-}}
-
-.ranking-wrap {{
-    width: 100%;
-}}
-.ranking-table {{
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.80rem;
-    table-layout: fixed;
-}}
-.ranking-table th,
-.ranking-table td {{
-    white-space: nowrap;
-    padding: 0.15rem 0.30rem;
-    text-align: left;
-    border-bottom: 1px solid rgba(49, 51, 63, 0.14);
-    overflow: hidden;
-    text-overflow: ellipsis;
-}}
-.ranking-table th {{
-    font-weight: 600;
-    background-color: var(--box-bg);
-}}
-.ranking-table tr:nth-child(even) td {{
-    background-color: rgba(255, 255, 255, 0.04);
-}}
-</style>
-
 <div class="ranking-box">
     <div class="ranking-wrap">
         <table class="ranking-table">
@@ -408,7 +360,7 @@ if hendelser_df is not None:
         hendelser_vis["DatoTid"] = excel_tid_til_datetime(hendelser_vis[tid_col])
         hendelser_vis = hendelser_vis.dropna(subset=["DatoTid", tekst_col])
 
-        cutoff = pd.Timestamp.now(tz="Europe/Oslo") - pd.Timedelta(hours=24)
+        cutoff = pd.Timestamp.now(tz=OSLO) - pd.Timedelta(hours=24)
         siste_24t = hendelser_vis[hendelser_vis["DatoTid"] >= cutoff]
 
         if len(siste_24t) < 20:
@@ -419,11 +371,9 @@ if hendelser_df is not None:
             hendelser_vis = siste_24t
 
         hendelser_vis = hendelser_vis.sort_values("DatoTid", ascending=False)
-
         hendelser_vis["Tid"] = hendelser_vis["DatoTid"].dt.strftime("%d.%m %H:%M")
         hendelser_vis["Hendelse"] = hendelser_vis[tekst_col].astype(str)
         hendelser_vis["Type"] = hendelser_vis[type_col].astype(str) if type_col is not None else ""
-        # BEHOLD DatoTid for hover-match
         hendelser_vis = hendelser_vis[["DatoTid", "Tid", "Type", "Hendelse"]]
 
         lookup_cols = [tid_col, tekst_col] + ([type_col] if type_col else [])
@@ -452,39 +402,23 @@ def finn_nærmeste_hendelse(ts, events_df, max_diff="45s"):
         return hendelse_str
     return ""
 
-def finn_nærmeste_hendelse_rad(ts, events_df, max_diff="45s"):
-    if events_df is None or events_df.empty or pd.isna(ts):
-        return None
-
-    diffs = (events_df["DatoTid"] - ts).abs()
-    idx = diffs.idxmin()
-
-    if diffs.loc[idx] <= pd.Timedelta(max_diff):
-        return events_df.loc[idx]
-    return None
-
 def poengendring_ved_rad(ts, poeng_df, deltaker_cols):
     after_rows  = poeng_df[poeng_df["tid"] == ts]
     before_rows = poeng_df[poeng_df["tid"] < ts]
-
     if after_rows.empty or before_rows.empty:
         return ""
-
     after_row  = after_rows.iloc[0]
     before_row = before_rows.iloc[-1]
-
     diffs = {}
     for deltaker in deltaker_cols:
         b = pd.to_numeric(before_row[deltaker], errors="coerce")
         a = pd.to_numeric(after_row[deltaker], errors="coerce")
         if pd.notna(b) and pd.notna(a) and a - b != 0:
             diffs.setdefault(int(a - b), []).append(str(deltaker))
-
     parts = []
     for diff in sorted(diffs.keys(), reverse=True):
         sign = "+" if diff > 0 else ""
         parts.append(f"{sign}{diff} {', '.join(sorted(diffs[diff]))}")
-
     return "<br>".join(parts)
 
 # -------------------------------------------------
@@ -495,21 +429,11 @@ poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
 poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 
 deltaker_cols = DELTAKER_COLS
-
 fig = go.Figure()
 
 for deltaker in deltaker_cols:
     y = pd.to_numeric(poeng_plot[deltaker], errors="coerce")
-    fig.add_trace(
-        go.Scatter(
-            x=poeng_plot["tid"],
-            y=y,
-            mode="lines",
-            name=str(deltaker),
-            line_shape="hv",
-            hoverinfo="skip"
-        )
-    )
+    fig.add_trace(go.Scatter(x=poeng_plot["tid"], y=y, mode="lines", name=str(deltaker), line_shape="hv", hoverinfo="skip"))
 
 event_texts = []
 for ts in poeng_plot["tid"]:
@@ -521,7 +445,6 @@ for ts in poeng_plot["tid"]:
     event_texts.append(event_text)
 
 hover_y = pd.to_numeric(poeng_plot[deltaker_cols[0]], errors="coerce")
-
 fig.add_trace(
     go.Scatter(
         x=poeng_plot["tid"],
@@ -530,9 +453,7 @@ fig.add_trace(
         marker=dict(size=18, opacity=0.001),
         showlegend=False,
         customdata=event_texts,
-        hovertemplate=(
-            "%{customdata}<extra></extra>"
-        )
+        hovertemplate="%{customdata}<extra></extra>"
     )
 )
 
@@ -572,27 +493,15 @@ fig.update_xaxes(
     spikethickness=1.2
 )
 
-# -------------------------------------------------
-# Y-AKSE: zoom inn til nærmeste 5 poeng under/over
-# -------------------------------------------------
-visible_df = poeng_plot[
-    (poeng_plot["tid"] >= now - pd.Timedelta(hours=24)) &
-    (poeng_plot["tid"] <= now)
-].copy()
-
+visible_df = poeng_plot[(poeng_plot["tid"] >= now - pd.Timedelta(hours=24)) & (poeng_plot["tid"] <= now)].copy()
 y_values = visible_df[deltaker_cols].apply(pd.to_numeric, errors="coerce").to_numpy().ravel()
 y_values = y_values[~pd.isna(y_values)]
 
 if len(y_values) > 0:
     y_min = float(y_values.min())
     y_max = float(y_values.max())
-
-    # NED: ned til nærmeste 5 under minimum
-    y_lower = int((y_min-1) // 5) * 5
-
-    # OPP: opp til nærmeste 5 over maksimum
-    y_upper = int((-(-(y_max+1) // 5))) * 5  # ceil til nærmeste 5
-
+    y_lower = int((y_min - 1) // 5) * 5
+    y_upper = int((-(-(y_max + 1) // 5))) * 5
     if y_lower == y_upper:
         y_lower -= 5
         y_upper += 5
@@ -608,16 +517,9 @@ fig.update_layout(
     spikedistance=-1,
     legend_title_text="",
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
-    hoverlabel=dict(
-        bgcolor="rgba(255,255,255,0.75)",
-        bordercolor="rgba(0,0,0,0.15)",
-        font=dict(color="#222")
-    ),
-    yaxis=dict(
-        range=[y_lower, y_upper]
-    )
+    hoverlabel=dict(bgcolor="rgba(255,255,255,0.75)", bordercolor="rgba(0,0,0,0.15)", font=dict(color="#222")),
+    yaxis=dict(range=[y_lower, y_upper])
 )
-
 
 # -------------------------------------------------
 # LAYOUT
@@ -627,7 +529,6 @@ main_col, side_col = st.columns([5.8, 1.8], gap="large")
 with main_col:
     st.plotly_chart(fig, use_container_width=True)
 
-    # Neste kamp-boks
     neste_kamp_html = ""
     if neste_kamp_df is not None and not neste_kamp_df.empty:
         cols = neste_kamp_df.columns.tolist()
@@ -639,16 +540,16 @@ with main_col:
 
         kamp_linjer = ""
         for _, row in neste_kamp_df.iterrows():
-            hjemmetla   = row[hjemmetla_col]   if hjemmetla_col   else ""
+            hjemmetla   = row[hjemmetla_col] if hjemmetla_col else ""
             hjemmeflagg = row[hjemmeflagg_col] if hjemmeflagg_col else ""
-            borteflagg  = row[borteflagg_col]  if borteflagg_col  else ""
-            bortetla    = row[bortetla_col]     if bortetla_col    else ""
-            tidspunkt   = row[tidspunkt_col]    if tidspunkt_col   else ""
+            borteflagg  = row[borteflagg_col] if borteflagg_col else ""
+            bortetla    = row[bortetla_col] if bortetla_col else ""
+            tidspunkt   = row[tidspunkt_col] if tidspunkt_col else ""
             match_id    = row[cols[0]]
 
             if pd.notna(tidspunkt):
                 try:
-                    tidspunkt_vis = pd.to_datetime(tidspunkt, utc=True).tz_convert("Europe/Oslo").strftime("%d.%m %H:%M")
+                    tidspunkt_vis = pd.to_datetime(tidspunkt, utc=True).tz_convert(OSLO).strftime("%d.%m %H:%M")
                 except Exception:
                     tidspunkt_vis = str(tidspunkt)
             else:
@@ -688,7 +589,7 @@ with main_col:
             )
 
         neste_kamp_html = (
-            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background: var(--box-bg);;font-size:0.90rem;box-sizing:border-box;">'
+            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;box-sizing:border-box;">'
             f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">{"Neste kamper" if len(neste_kamp_df) > 1 else "Neste kamp"}</div>'
             f'{kamp_linjer}'
             f'</div>'
@@ -700,7 +601,7 @@ with main_col:
         hendelser_html = ""
         if hendelser_vis is not None and not hendelser_vis.empty:
             hendelser_html = "".join(
-                f'<div style="display:inline-block;vertical-align:top;min-width:180px;max-width:250px;margin-right:10px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background: var(--box-bg);;font-size:0.90rem;">'
+                f'<div style="display:inline-block;vertical-align:top;min-width:180px;max-width:250px;margin-right:10px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;">'
                 f'<div style="font-weight:600;margin-bottom:3px;">{row.Tid}</div>'
                 f'<div style="font-size:0.82rem;color:#666;margin-bottom:3px;">{row.Type}</div>'
                 f'<div style="line-height:1.3;">{row.Hendelse}</div>'
@@ -743,7 +644,7 @@ with side_col:
             flagg_h = f'<img src="{hjemmeflagg}" style="height:18px;width:auto;vertical-align:middle;">' if pd.notna(hjemmeflagg) and hjemmeflagg else ""
             flagg_b = f'<img src="{borteflagg}" style="height:18px;width:auto;vertical-align:middle;">' if pd.notna(borteflagg) and borteflagg else ""
             hm = int(hjemmemål) if pd.notna(hjemmemål) else 0
-            bm = int(bortemål)  if pd.notna(bortemål)  else 0
+            bm = int(bortemål) if pd.notna(bortemål) else 0
             status_val = row[cols[7]] if len(cols) > 7 else ""
             status_str = str(status_val).strip() if pd.notna(status_val) else ""
             if status_str == "IN_PLAY":
@@ -774,10 +675,7 @@ with side_col:
             header_line = f"{hjemmetla} {hm} – {bm} {bortetla} · {status_label}"
             tip_html = ""
             if tips_linjer:
-                tip_rows = "".join(
-                    f'<div>{line}</div>'
-                    for line in (header_line + "\n\nTips:\n" + tips_linjer).split("\n")
-                )
+                tip_rows = "".join(f'<div>{line}</div>' for line in (header_line + "\n\nTips:\n" + tips_linjer).split("\n"))
                 tip_html = f'<div class="aktiv-tip">{tip_rows}</div>'
 
             kamp_linjer += (
@@ -791,7 +689,7 @@ with side_col:
                 f'</div>'
             )
         aktiv_kamp_html = (
-            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background: var(--box-bg);;font-size:0.90rem;box-sizing:border-box;">'
+            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;box-sizing:border-box;">'
             f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;"><span class="rec-dot"></span>Aktiv kamp</div>'
             f'{kamp_linjer}'
             f'</div>'
