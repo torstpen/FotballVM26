@@ -17,7 +17,14 @@ st.markdown("""
 <style>
 .match-box,
 .event-box,
-.ranking-box {
+.ranking-box,
+.ranking-wrap,
+.ranking-table,
+.ranking-table thead,
+.ranking-table tbody,
+.ranking-table tr,
+.ranking-table th,
+.ranking-table td {
     background: #fafafa !important;
 }
 
@@ -26,7 +33,6 @@ st.markdown("""
     border-collapse: collapse;
     font-size: 0.80rem;
     table-layout: fixed;
-    background: #fafafa !important;
 }
 
 .ranking-table th,
@@ -37,7 +43,6 @@ st.markdown("""
     border-bottom: 1px solid rgba(49, 51, 63, 0.14);
     overflow: hidden;
     text-overflow: ellipsis;
-    background: #fafafa !important;
 }
 
 .ranking-table th {
@@ -52,14 +57,20 @@ st.markdown("""
 @media (prefers-color-scheme: dark) {
     .match-box,
     .event-box,
-    .ranking-box {
-        background: #1e1e1e !important;
-    }
-
+    .ranking-box,
+    .ranking-wrap,
     .ranking-table,
+    .ranking-table thead,
+    .ranking-table tbody,
+    .ranking-table tr,
     .ranking-table th,
     .ranking-table td {
         background: #1e1e1e !important;
+    }
+
+    .ranking-table th,
+    .ranking-table td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.10);
     }
 
     .ranking-table tr:nth-child(even) td {
