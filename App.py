@@ -13,6 +13,24 @@ st.set_page_config(layout="wide")
 OSLO = "Europe/Oslo"
 URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
 
+st.markdown("""
+<style>
+/* Default = light mode */
+:root {
+    --box-bg: #fafafa;
+    --box-border: rgba(49, 51, 63, 0.15);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --box-bg: #1e1e1e;
+        --box-border: rgba(255, 255, 255, 0.15);
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
 def excel_tid_til_datetime(series):
     if pd.api.types.is_numeric_dtype(series):
         dt = pd.to_datetime(series, unit="D", origin="1899-12-30", errors="coerce")
@@ -244,10 +262,10 @@ ranking_html = f"""
 }}
 .ranking-table th {{
     font-weight: 600;
-    background-color: rgba(250, 250, 250, 0.95);
+    background-color: var(--box-bg);
 }}
 .ranking-table tr:nth-child(even) td {{
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: rgba(255, 255, 255, 0.04);
 }}
 </style>
 
@@ -609,7 +627,7 @@ with main_col:
             )
 
         neste_kamp_html = (
-            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#f0f4ff;font-size:0.90rem;box-sizing:border-box;">'
+            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background: var(--box-bg);;font-size:0.90rem;box-sizing:border-box;">'
             f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">{"Neste kamper" if len(neste_kamp_df) > 1 else "Neste kamp"}</div>'
             f'{kamp_linjer}'
             f'</div>'
@@ -621,7 +639,7 @@ with main_col:
         hendelser_html = ""
         if hendelser_vis is not None and not hendelser_vis.empty:
             hendelser_html = "".join(
-                f'<div style="display:inline-block;vertical-align:top;min-width:180px;max-width:250px;margin-right:10px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;">'
+                f'<div style="display:inline-block;vertical-align:top;min-width:180px;max-width:250px;margin-right:10px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background: var(--box-bg);;font-size:0.90rem;">'
                 f'<div style="font-weight:600;margin-bottom:3px;">{row.Tid}</div>'
                 f'<div style="font-size:0.82rem;color:#666;margin-bottom:3px;">{row.Type}</div>'
                 f'<div style="line-height:1.3;">{row.Hendelse}</div>'
@@ -712,7 +730,7 @@ with side_col:
                 f'</div>'
             )
         aktiv_kamp_html = (
-            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fff4e0;font-size:0.90rem;box-sizing:border-box;">'
+            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background: var(--box-bg);;font-size:0.90rem;box-sizing:border-box;">'
             f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;"><span class="rec-dot"></span>Aktiv kamp</div>'
             f'{kamp_linjer}'
             f'</div>'
