@@ -21,12 +21,6 @@ st.markdown("""
     background: #fafafa !important;
 }
 
-st.markdown("""
-<style>
-.ranking-box {
-    background: #fafafa !important;
-}
-
 .ranking-table {
     width: 100%;
     border-collapse: collapse;
@@ -56,7 +50,12 @@ st.markdown("""
 }
 
 @media (prefers-color-scheme: dark) {
-    .ranking-box,
+    .match-box,
+    .event-box,
+    .ranking-box {
+        background: #1e1e1e !important;
+    }
+
     .ranking-table,
     .ranking-table th,
     .ranking-table td {
@@ -65,16 +64,6 @@ st.markdown("""
 
     .ranking-table tr:nth-child(even) td {
         background-color: #242424 !important;
-    }
-}
-</style>
-""", unsafe_allow_html=True)
-
-@media (prefers-color-scheme: dark) {
-    .match-box,
-    .event-box,
-    .ranking-box {
-        background: #1e1e1e !important;
     }
 }
 </style>
