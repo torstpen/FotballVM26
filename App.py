@@ -15,17 +15,17 @@ URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.x
 
 st.markdown("""
 <style>
-/* Default = light mode */
-:root {
-    --box-bg: #fafafa;
-    --box-border: rgba(49, 51, 63, 0.15);
+.match-box,
+.event-box,
+.ranking-box {
+    background: #fafafa !important;
 }
 
-/* Dark mode */
 @media (prefers-color-scheme: dark) {
-    :root {
-        --box-bg: #1e1e1e;
-        --box-border: rgba(255, 255, 255, 0.15);
+    .match-box,
+    .event-box,
+    .ranking-box {
+        background: #1e1e1e !important;
     }
 }
 </style>
@@ -242,6 +242,16 @@ rows_html = "\n".join(
 
 ranking_html = f"""
 <style>
+.ranking-box {{
+    background: #fafafa !important;
+}}
+
+@media (prefers-color-scheme: dark) {{
+    .ranking-box {{
+        background: #1e1e1e !important;
+    }}
+}}
+
 .ranking-wrap {{
     width: 100%;
 }}
@@ -269,21 +279,23 @@ ranking_html = f"""
 }}
 </style>
 
-<div class="ranking-wrap">
-<table class="ranking-table">
-    <thead>
-        <tr>
-            <th style="width:20%;">Plass</th>
-            <th style="width:10%;"></th>
-            <th style="width:42%;">Deltaker</th>
-            <th style="width:14%;">Poeng</th>
-            <th style="width:14%;">24t</th>
-        </tr>
-    </thead>
-    <tbody>
-        {rows_html}
-    </tbody>
-</table>
+<div class="ranking-box">
+    <div class="ranking-wrap">
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th style="width:20%;">Plass</th>
+                    <th style="width:10%;"></th>
+                    <th style="width:42%;">Deltaker</th>
+                    <th style="width:14%;">Poeng</th>
+                    <th style="width:14%;">24t</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+    </div>
 </div>
 """
 
