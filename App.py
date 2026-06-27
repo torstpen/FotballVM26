@@ -478,10 +478,10 @@ if not label_df.empty:
             y=row["Poeng"],
             text=row["Deltaker"],
             showarrow=False,
-            xanchor="left",
+            xanchor="right",
             yanchor="bottom",
             yshift=4,
-            xshift=4,
+            xshift=-4,
             font=dict(size=12),
         )
 
