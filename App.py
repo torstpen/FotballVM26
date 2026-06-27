@@ -480,7 +480,7 @@ if not label_df.empty:
             showarrow=False,
             xanchor="right",
             yanchor="bottom",
-            yshift=4,
+            yshift=2,
             xshift=-4,
             font=dict(size=12),
         )
