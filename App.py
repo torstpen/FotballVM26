@@ -472,17 +472,18 @@ label_df = (
 )
 
 if not label_df.empty:
-    fig.add_trace(
-        go.Scatter(
-            x=[now] * len(label_df),
-            y=label_df["Poeng"] + 10,
-            mode="text",
-            text=label_df["Deltaker"],
-            textposition="middle left",
-            showlegend=False,
-            hoverinfo="skip"
+    for _, row in label_df.iterrows():
+        fig.add_annotation(
+            x=now,
+            y=row["Poeng"],
+            text=row["Deltaker"],
+            showarrow=False,
+            xanchor="left",
+            yanchor="bottom",
+            yshift=4,
+            xshift=4,
+            font=dict(size=12),
         )
-    )
 
 fig.update_xaxes(
     range=[now - pd.Timedelta(hours=24), now],
