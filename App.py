@@ -15,76 +15,106 @@ URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.x
 
 st.markdown("""
 <style>
-.match-box,
-.event-box,
-.ranking-box,
-.ranking-wrap,
-.ranking-table,
-.ranking-table thead,
-.ranking-table tbody,
-.ranking-table tr,
-.ranking-table th,
-.ranking-table td {
-    background: #fafafa !important;
+:root {
+    --vm-bg-card:    #fafafa;
+    --vm-bg-stripe:  rgba(0,0,0,0.03);
+    --vm-border:     rgba(49,51,63,0.15);
+    --vm-text-muted: #666;
+    --vm-text-sub:   #444;
+    --vm-text-main:  #111;
+    --vm-hover-bg:   #222;
+    --vm-hover-fg:   #fff;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --vm-bg-card:    #1e1e1e;
+        --vm-bg-stripe:  rgba(255,255,255,0.04);
+        --vm-border:     rgba(255,255,255,0.12);
+        --vm-text-muted: #999;
+        --vm-text-sub:   #bbb;
+        --vm-text-main:  #eee;
+        --vm-hover-bg:   #333;
+        --vm-hover-fg:   #fff;
+    }
 }
 
-.ranking-box {
-    padding: 0;
-    border-radius: 10px;
+.match-box, .event-box, .ranking-box, .ranking-wrap,
+.ranking-table, .ranking-table thead, .ranking-table tbody,
+.ranking-table tr, .ranking-table th, .ranking-table td {
+    background: var(--vm-bg-card) !important;
+    color: var(--vm-text-main) !important;
 }
-
-.ranking-wrap {
-    width: 100%;
-}
-
+.ranking-box  { padding: 0; border-radius: 10px; }
+.ranking-wrap { width: 100%; }
 .ranking-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.80rem;
     table-layout: fixed;
 }
-
-.ranking-table th,
-.ranking-table td {
+.ranking-table th, .ranking-table td {
     white-space: nowrap;
     padding: 0.15rem 0.30rem;
     text-align: left;
-    border-bottom: 1px solid rgba(49, 51, 63, 0.14);
+    border-bottom: 1px solid var(--vm-border);
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.ranking-table th { font-weight: 600; }
+.ranking-table tr:nth-child(even) td { background-color: var(--vm-bg-stripe) !important; }
 
-.ranking-table th {
-    font-weight: 600;
-    background-color: #fafafa !important;
+.vm-card {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--vm-border);
+    border-radius: 10px;
+    background: var(--vm-bg-card);
+    font-size: 0.90rem;
+    box-sizing: border-box;
+    color: var(--vm-text-main);
+}
+.vm-label { font-size: 0.78rem; color: var(--vm-text-muted); margin-bottom: 4px; }
+.vm-sub   { font-size: 0.82rem; color: var(--vm-text-muted); margin-bottom: 3px; }
+.vm-time  { color: var(--vm-text-sub); font-size: 0.82rem; white-space: nowrap; margin-left: 6px; }
+
+.vm-event-box {
+    display: inline-block;
+    vertical-align: top;
+    min-width: 180px;
+    max-width: 250px;
+    margin-right: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--vm-border);
+    border-radius: 10px;
+    background: var(--vm-bg-card);
+    font-size: 0.90rem;
+    color: var(--vm-text-main);
 }
 
-.ranking-table tr:nth-child(even) td {
-    background-color: rgba(255, 255, 255, 0.04);
+.aktiv-kamp-rad { position: relative; }
+.aktiv-tip {
+    display: none; position: absolute; right: 0; top: 110%;
+    background: var(--vm-hover-bg); color: var(--vm-hover-fg);
+    padding: 6px 10px; border-radius: 6px; font-size: 0.78rem;
+    font-weight: 400; white-space: nowrap; text-align: right;
+    z-index: 9999; min-width: 160px;
 }
+.aktiv-kamp-rad:hover .aktiv-tip { display: block; }
+.neste-kamp-rad { position: relative; cursor: default; }
+.neste-tip {
+    display: none; position: absolute; left: 0; top: 100%;
+    background: var(--vm-hover-bg); color: var(--vm-hover-fg);
+    padding: 6px 10px; border-radius: 6px; font-size: 0.78rem;
+    font-weight: 400; white-space: nowrap; text-align: right;
+    z-index: 9999; min-width: 160px;
+}
+.neste-kamp-rad:hover .neste-tip { display: block; }
 
-@media (prefers-color-scheme: dark) {
-    .match-box,
-    .event-box,
-    .ranking-box,
-    .ranking-wrap,
-    .ranking-table,
-    .ranking-table thead,
-    .ranking-table tbody,
-    .ranking-table tr,
-    .ranking-table th,
-    .ranking-table td {
-        background: #1e1e1e !important;
-    }
-
-    .ranking-table th,
-    .ranking-table td {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.10);
-    }
-
-    .ranking-table tr:nth-child(even) td {
-        background-color: #242424 !important;
-    }
+@keyframes rec-blink { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
+.rec-dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; background: #e00; margin-right: 5px;
+    vertical-align: middle; animation: rec-blink 1.2s ease-in-out infinite;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -518,7 +548,7 @@ fig.update_layout(
     spikedistance=-1,
     legend_title_text="",
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
-    hoverlabel=dict(bgcolor="rgba(255,255,255,0.75)", bordercolor="rgba(0,0,0,0.15)", font=dict(color="#222")),
+    hoverlabel=dict(bgcolor="rgba(40,40,40,0.88)", bordercolor="rgba(255,255,255,0.15)", font=dict(color="#eee")),
     yaxis=dict(range=[y_lower, y_upper])
 )
 
@@ -583,15 +613,15 @@ with main_col:
                 f'<span style="flex:1;text-align:right;font-weight:600;">{hjemmetla} {flagg_h}</span>'
                 f'<span style="font-weight:600;">–</span>'
                 f'<span style="flex:1;text-align:left;font-weight:600;">{flagg_b} {bortetla}</span>'
-                f'<span style="color:#444;font-size:0.82rem;white-space:nowrap;margin-left:6px;">{tidspunkt_vis}</span>'
+                f'<span class="vm-time">{tidspunkt_vis}</span>'
                 f'</div>'
                 f'{tips_html}'
                 f'</div>'
             )
 
         neste_kamp_html = (
-            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;box-sizing:border-box;">'
-            f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;">{"Neste kamper" if len(neste_kamp_df) > 1 else "Neste kamp"}</div>'
+            f'<div class="vm-card">'
+            f'<div class="vm-label">{"Neste kamper" if len(neste_kamp_df) > 1 else "Neste kamp"}</div>'
             f'{kamp_linjer}'
             f'</div>'
         )
@@ -602,9 +632,9 @@ with main_col:
         hendelser_html = ""
         if hendelser_vis is not None and not hendelser_vis.empty:
             hendelser_html = "".join(
-                f'<div style="display:inline-block;vertical-align:top;min-width:180px;max-width:250px;margin-right:10px;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;">'
+                f'<div class="vm-event-box">'
                 f'<div style="font-weight:600;margin-bottom:3px;">{row.Tid}</div>'
-                f'<div style="font-size:0.82rem;color:#666;margin-bottom:3px;">{row.Type}</div>'
+                f'<div class="vm-sub">{row.Type}</div>'
                 f'<div style="line-height:1.3;">{row.Hendelse}</div>'
                 f'</div>'
                 for _, row in hendelser_vis.iterrows()
@@ -620,16 +650,6 @@ with main_col:
 with side_col:
     st.markdown(ranking_html, unsafe_allow_html=True)
 
-    st.markdown("""<style>
-.aktiv-kamp-rad{position:relative;}
-.aktiv-tip{display:none;position:absolute;right:0;top:110%;background:#222;color:#fff;padding:6px 10px;border-radius:6px;font-size:0.78rem;font-weight:400;white-space:nowrap;text-align:right;z-index:9999;min-width:160px;}
-.aktiv-kamp-rad:hover .aktiv-tip{display:block;}
-.neste-kamp-rad{position:relative;cursor:default;}
-.neste-tip{display:none;position:absolute;left:0;top:100%;background:#222;color:#fff;padding:6px 10px;border-radius:6px;font-size:0.78rem;font-weight:400;white-space:nowrap;text-align:right;z-index:9999;min-width:160px;}
-.neste-kamp-rad:hover .neste-tip{display:block;}
-@keyframes rec-blink{0%,100%{opacity:1;}50%{opacity:0.15;}}
-.rec-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e00;margin-right:5px;vertical-align:middle;animation:rec-blink 1.2s ease-in-out infinite;}
-</style>""", unsafe_allow_html=True)
 
     aktiv_kamp_html = ""
     if aktiv_kamp_df is not None and not aktiv_kamp_df.empty:
@@ -690,8 +710,8 @@ with side_col:
                 f'</div>'
             )
         aktiv_kamp_html = (
-            f'<div style="width:100%;padding:8px 10px;border:1px solid rgba(49,51,63,0.15);border-radius:10px;background:#fafafa;font-size:0.90rem;box-sizing:border-box;">'
-            f'<div style="font-size:0.78rem;color:#666;margin-bottom:4px;"><span class="rec-dot"></span>Aktiv kamp</div>'
+            f'<div class="vm-card">'
+            f'<div class="vm-label"><span class="rec-dot"></span>Aktiv kamp</div>'
             f'{kamp_linjer}'
             f'</div>'
         )
