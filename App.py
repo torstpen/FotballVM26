@@ -130,15 +130,28 @@ st.markdown("""
 </style>
 <script>
 (function() {
+  function isDark() {
+    // Sjekk data-theme på html/body eller Streamlit stApp
+    if (document.documentElement.getAttribute('data-theme') === 'dark') return true;
+    if (document.body.getAttribute('data-theme') === 'dark') return true;
+    var app = document.querySelector('[data-testid="stApp"]');
+    if (app && app.getAttribute('data-theme') === 'dark') return true;
+    // Fallback: les bakgrunnsfargens lysstyrke
+    var bg = window.getComputedStyle(document.body).backgroundColor;
+    var m = bg.match(/\d+/g);
+    if (m && m.length >= 3) {
+      var lum = 0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2];
+      return lum < 100;
+    }
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
   function syncTheme() {
-    var dark = document.body.getAttribute('data-theme') === 'dark'
-            || document.documentElement.getAttribute('data-theme') === 'dark'
-            || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.body.classList.toggle('vm-dark', dark);
+    document.body.classList.toggle('vm-dark', isDark());
   }
   syncTheme();
-  new MutationObserver(syncTheme).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
-  new MutationObserver(syncTheme).observe(document.body, {attributes: true, attributeFilter: ['data-theme', 'class']});
+  setInterval(syncTheme, 1000);
+  new MutationObserver(syncTheme).observe(document.documentElement, {attributes: true, subtree: false});
+  new MutationObserver(syncTheme).observe(document.body, {attributes: true, childList: true, subtree: false});
   if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncTheme);
 })();
 </script>
