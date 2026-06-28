@@ -37,6 +37,17 @@ st.markdown("""
         --vm-hover-fg:   #fff;
     }
 }
+[data-theme="dark"],
+.vm-dark {
+    --vm-bg-card:    #1e1e1e;
+    --vm-bg-stripe:  rgba(255,255,255,0.04);
+    --vm-border:     rgba(255,255,255,0.12);
+    --vm-text-muted: #999;
+    --vm-text-sub:   #bbb;
+    --vm-text-main:  #eee;
+    --vm-hover-bg:   #333;
+    --vm-hover-fg:   #fff;
+}
 
 .match-box, .event-box, .ranking-box, .ranking-wrap,
 .ranking-table, .ranking-table thead, .ranking-table tbody,
@@ -117,6 +128,20 @@ st.markdown("""
     vertical-align: middle; animation: rec-blink 1.2s ease-in-out infinite;
 }
 </style>
+<script>
+(function() {
+  function syncTheme() {
+    var dark = document.body.getAttribute('data-theme') === 'dark'
+            || document.documentElement.getAttribute('data-theme') === 'dark'
+            || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.body.classList.toggle('vm-dark', dark);
+  }
+  syncTheme();
+  new MutationObserver(syncTheme).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+  new MutationObserver(syncTheme).observe(document.body, {attributes: true, attributeFilter: ['data-theme', 'class']});
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncTheme);
+})();
+</script>
 """, unsafe_allow_html=True)
 
 def excel_tid_til_datetime(series):
