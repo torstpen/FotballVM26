@@ -19,15 +19,28 @@ except Exception:
 
 if _is_dark:
     st.markdown("""<style>
-:root {
-    --vm-bg-card:    #1e1e1e !important;
-    --vm-bg-stripe:  rgba(255,255,255,0.04) !important;
-    --vm-border:     rgba(255,255,255,0.12) !important;
-    --vm-text-muted: #999 !important;
-    --vm-text-sub:   #bbb !important;
-    --vm-text-main:  #eee !important;
-    --vm-hover-bg:   #333 !important;
-    --vm-hover-fg:   #fff !important;
+.ranking-box, .ranking-wrap,
+.ranking-table, .ranking-table thead, .ranking-table tbody,
+.ranking-table tr, .ranking-table th, .ranking-table td {
+    background: #1e1e1e !important;
+    color: #eee !important;
+}
+.ranking-table th, .ranking-table td {
+    border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+}
+.ranking-table tr:nth-child(even) td {
+    background-color: rgba(255,255,255,0.04) !important;
+}
+.vm-card {
+    background: #1e1e1e !important;
+    color: #eee !important;
+    border-color: rgba(255,255,255,0.12) !important;
+}
+.vm-label, .vm-sub, .vm-time { color: #999 !important; }
+.vm-event-box {
+    background: #1e1e1e !important;
+    color: #eee !important;
+    border-color: rgba(255,255,255,0.12) !important;
 }
 </style>""", unsafe_allow_html=True)
 URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
