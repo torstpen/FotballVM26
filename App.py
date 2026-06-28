@@ -11,6 +11,25 @@ graph_height = 700
 # -------------------------------------------------
 st.set_page_config(layout="wide")
 OSLO = "Europe/Oslo"
+
+try:
+    _is_dark = st.get_option("theme.base") == "dark"
+except Exception:
+    _is_dark = False
+
+if _is_dark:
+    st.markdown("""<style>
+:root {
+    --vm-bg-card:    #1e1e1e !important;
+    --vm-bg-stripe:  rgba(255,255,255,0.04) !important;
+    --vm-border:     rgba(255,255,255,0.12) !important;
+    --vm-text-muted: #999 !important;
+    --vm-text-sub:   #bbb !important;
+    --vm-text-main:  #eee !important;
+    --vm-hover-bg:   #333 !important;
+    --vm-hover-fg:   #fff !important;
+}
+</style>""", unsafe_allow_html=True)
 URL = "https://www.dropbox.com/scl/fi/0nejigu8olvzhzm179cef/vm_2026_resultater.xlsx?rlkey=tdoi40028u4ve6nvqsow4zurt&dl=1"
 
 st.markdown("""
@@ -37,8 +56,7 @@ st.markdown("""
         --vm-hover-fg:   #fff;
     }
 }
-[data-theme="dark"],
-.vm-dark {
+[data-theme="dark"] {
     --vm-bg-card:    #1e1e1e;
     --vm-bg-stripe:  rgba(255,255,255,0.04);
     --vm-border:     rgba(255,255,255,0.12);
@@ -128,33 +146,6 @@ st.markdown("""
     vertical-align: middle; animation: rec-blink 1.2s ease-in-out infinite;
 }
 </style>
-<script>
-(function() {
-  function isDark() {
-    // Sjekk data-theme på html/body eller Streamlit stApp
-    if (document.documentElement.getAttribute('data-theme') === 'dark') return true;
-    if (document.body.getAttribute('data-theme') === 'dark') return true;
-    var app = document.querySelector('[data-testid="stApp"]');
-    if (app && app.getAttribute('data-theme') === 'dark') return true;
-    // Fallback: les bakgrunnsfargens lysstyrke
-    var bg = window.getComputedStyle(document.body).backgroundColor;
-    var m = bg.match(/\d+/g);
-    if (m && m.length >= 3) {
-      var lum = 0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2];
-      return lum < 100;
-    }
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  function syncTheme() {
-    document.body.classList.toggle('vm-dark', isDark());
-  }
-  syncTheme();
-  setInterval(syncTheme, 1000);
-  new MutationObserver(syncTheme).observe(document.documentElement, {attributes: true, subtree: false});
-  new MutationObserver(syncTheme).observe(document.body, {attributes: true, childList: true, subtree: false});
-  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncTheme);
-})();
-</script>
 """, unsafe_allow_html=True)
 
 def excel_tid_til_datetime(series):
