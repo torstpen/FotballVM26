@@ -501,7 +501,6 @@ poeng_plot["tid"] = pd.to_datetime(poeng_plot["tid"], errors="coerce")
 poeng_plot = poeng_plot.dropna(subset=["tid"]).copy()
 
 deltaker_cols = DELTAKER_COLS
-st.write(f"Antall deltakere: {len(deltaker_cols)} — {deltaker_cols}")
 fig = go.Figure()
 
 _n = len(deltaker_cols)
