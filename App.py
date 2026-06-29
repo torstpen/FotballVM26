@@ -504,11 +504,6 @@ deltaker_cols = DELTAKER_COLS
 st.write(f"Antall deltakere: {len(deltaker_cols)} — {deltaker_cols}")
 fig = go.Figure()
 
-_FARGER = [
-    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
-]
-
 _n = len(deltaker_cols)
 for i, deltaker in enumerate(deltaker_cols):
     y = pd.to_numeric(poeng_plot[deltaker], errors="coerce")
@@ -516,7 +511,7 @@ for i, deltaker in enumerate(deltaker_cols):
     fig.add_trace(go.Scatter(
         x=poeng_plot["tid"], y=y, mode="lines", name=str(deltaker),
         hoverinfo="skip",
-        line=dict(color=_FARGER[i % len(_FARGER)], dash=dash, shape="hv"),
+        line=dict(dash=dash, shape="hv"),
     ))
 
 event_texts = []
